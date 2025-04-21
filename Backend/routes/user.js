@@ -67,9 +67,17 @@ router.post('/login', async (req, res) => {
         });
         await newRefreshToken.save();
 
+        // Thêm httpOnly cookie cho refresh token
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        // Chỉ gửi access token qua response
         res.json({
             accessToken,
-            refreshToken,
             user: {
                 id: user._id,
                 name: user.name,
@@ -118,20 +126,39 @@ router.post('/logout', async (req, res) => {
 
 // Tạo access token mới từ refresh token
 router.post('/token', async (req, res) => {
-    const { refreshToken } = req.body;
-    if (!refreshToken) return res.status(401).json({ message: 'Refresh token is required' });
-
     try {
-        const token = await RefreshToken.findOne({ token: refreshToken, isRevoked: false });
-        if (!token) return res.status(403).json({ message: 'Invalid refresh token' });
-
-        const user = await User.findById(token.userId);
-        if (!user) return res.status(403).json({ message: 'Invalid refresh token' });
-
-        const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
+        const oldRefreshToken = req.cookies.refreshToken;
+        
+        // Verify và tìm token trong database
+        const tokenDoc = await RefreshToken.findOne({ 
+            token: oldRefreshToken,
+            isRevoked: false 
+        });
+        
+        if (!tokenDoc) {
+            return res.status(403).json({ message: 'Invalid refresh token' });
+        }
+        
+        // Thu hồi token cũ
+        tokenDoc.isRevoked = true;
+        await tokenDoc.save();
+        
+        // Tạo cặp token mới
+        const user = await User.findById(tokenDoc.userId);
+        const accessToken = generateAccessToken(user);
+        const refreshToken = await generateRefreshToken(user);
+        
+        // Set cookie mới
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+        
         res.json({ accessToken });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(403).json({ message: 'Invalid refresh token' });
     }
 });
 
