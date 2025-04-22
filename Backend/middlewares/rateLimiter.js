@@ -1,3 +1,4 @@
+//rate limiting cho các endpoint authentication
 const rateLimit = require('express-rate-limit');
 
 const loginLimiter = rateLimit({

@@ -22,8 +22,9 @@ const io = socketIo(server, {
 mongoose.connect(process.env.DATABASE_URL);
 
 const db = mongoose.connection;
-db.on('error', (error) => console.error(error));
-db.once('open', () => console.log('Connected to Database'));
+const logger = require('./config/logger');
+db.on('error', (error) => logger.error('Database connection error:', error));
+db.once('open', () => logger.info('Connected to Database'));
 
 // Middleware
 const corsOptions = {
@@ -37,9 +38,18 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 const checkTokenExpiration = require('./middlewares/tokenExpiration');
-
+const errorHandler = require('./middlewares/errorHandler');
+const authTracker = require('./middlewares/authTracker');
+const { loginLimiter, refreshTokenLimiter } = require('./middlewares/rateLimiter');
 
 app.use(checkTokenExpiration);
+
+// Add auth tracking middleware
+app.use(authTracker);
+
+// Apply rate limiting to specific routes
+app.use('/user/login', loginLimiter);
+app.use('/user/token', refreshTokenLimiter);
 
 // Routes
 const productsRouter = require('./routes/products');
@@ -80,10 +90,13 @@ io.on('connection', (socket) => {
   });
 });
 
+// Error handler middleware (must be last)
+app.use(errorHandler);
+
 // Khởi chạy server
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  logger.info(`Server is running on http://localhost:${PORT}`);
 });
 
 // Xuất io để sử dụng trong các router nếu cần

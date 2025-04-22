@@ -1,5 +1,6 @@
-import React, { useState, createContext, useContext, ReactNode } from 'react';
+import React, { useState, createContext, useContext, ReactNode, useEffect } from 'react';
 import axios from 'axios';
+import LoadingScreen from '../components/LoadingScreen';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -36,12 +37,40 @@ interface LoginResponse {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{
-  children: ReactNode;
-}> = ({
-  children
-}) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Thêm function để check authentication status
+  const checkAuth = async () => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      
+      if (!accessToken) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // Set token vào header
+      axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      
+      // Gọi API để verify token và lấy user info
+      const response = await axios.get<User>(`${API_URL}/user/me`);
+      setUser(response.data);
+    } catch (error) {
+      // Nếu token invalid, clear localStorage và user state
+      localStorage.removeItem('accessToken');
+      delete axios.defaults.headers.common['Authorization'];
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Chạy checkAuth khi component mount
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
   const login = async (phoneNumber: string, password: string) => {
     try {
@@ -108,15 +137,20 @@ export const AuthProvider: React.FC<{
     }
   };
 
-  return <AuthContext.Provider value={{
-    user,
-    isAuthenticated: !!user,
-    login,
-    signup,
-    logout
-  }}>
-      {children}
-    </AuthContext.Provider>;
+  return (
+    <>
+      <LoadingScreen isLoading={loading} />
+      <AuthContext.Provider value={{
+        user,
+        isAuthenticated: !!user,
+        login,
+        signup,
+        logout
+      }}>
+        {!loading && children}
+      </AuthContext.Provider>
+    </>
+  );
 };
 
 export const useAuth = () => {

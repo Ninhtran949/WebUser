@@ -1,3 +1,4 @@
+// Middleware để xác thực token
 const jwt = require('jsonwebtoken');
 const RefreshToken = require('../models/refreshToken');
 

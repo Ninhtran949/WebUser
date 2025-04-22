@@ -7,3 +7,6 @@ error.log
 .env
 .env.local
 .env.*.local
+# Logs
+logs/
+*.log
