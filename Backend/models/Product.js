@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
-
-  
+  // MongoDB tự động tạo _id
   codeCategory: {
     type: String,
     required: true,
@@ -10,6 +9,7 @@ const productSchema = new mongoose.Schema({
   codeProduct: {
     type: String,
     required: true,
+    unique: true  // Thêm unique để đảm bảo không trùng
   },
   imgProduct: {
     type: String,
@@ -26,7 +26,7 @@ const productSchema = new mongoose.Schema({
   userPartner: {
     type: String,
     required: true,
-  },
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

@@ -64,9 +64,13 @@ const userRouter = require('./routes/user');
 app.use('/user', userRouter); 
 const cartRouter = require('./routes/cart')(io); // Truyền io vào router
 app.use('/cart', cartRouter);
+const booksRouter = require('./routes/books');
+app.use('/api/books', booksRouter);
+
 
 const paymentZaloRouter = require('./services/paymentzalo');
 app.use('/zalopay', paymentZaloRouter);        // Import và sử dụng các endpoint từ paymentzalo.js
+
 
 // Import và thiết lập WebSocket chat
 const setupWebSocket = require('./services/chat');
