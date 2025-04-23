@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ShoppingCartIcon, CheckIcon } from 'lucide-react';
 import { findBookById } from '../data/books';
@@ -6,19 +6,12 @@ import RelatedBooks from '../components/RelatedBooks';
 import EditorialReviews from '../components/EditorialReviews';
 import CustomerReviews from '../components/CustomerReviews';
 import { useCart } from '../contexts/CartContext';
-import { useAuth } from '../contexts/AuthContext';
 import SignInDialog from '../components/SignInDialog';
+
 const BookDetails = () => {
-  const {
-    id
-  } = useParams();
+  const { id } = useParams();
   const book = findBookById(Number(id));
-  const {
-    addItem
-  } = useCart();
-  const {
-    isAuthenticated
-  } = useAuth();
+  const { addItem } = useCart();
   const [isSignInDialogOpen, setIsSignInDialogOpen] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   if (!book) {
@@ -95,9 +88,13 @@ const BookDetails = () => {
           </div>
         </div>
         {/* Editorial Reviews */}
-        <EditorialReviews reviews={book.editorialReviews} />
+        {book.editorialReviews && book.editorialReviews.length > 0 && (
+          <EditorialReviews reviews={book.editorialReviews} />
+        )}
         {/* Customer Reviews */}
-        <CustomerReviews reviews={book.customerReviews} />
+        {book.customerReviews && book.customerReviews.length > 0 && (
+          <CustomerReviews reviews={book.customerReviews} />
+        )}
         {/* Related Books */}
         <RelatedBooks category={book.category} currentBookId={book.id} />
       </div>
