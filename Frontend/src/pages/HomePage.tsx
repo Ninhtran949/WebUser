@@ -1,4 +1,3 @@
-import React, { Children } from 'react';
 import HeroBanner from '../components/HeroBanner';
 import CategorySection from '../components/CategorySection';
 import PromotionalBanner from '../components/PromotionalBanner';
