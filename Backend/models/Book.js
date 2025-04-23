@@ -14,36 +14,42 @@ const customerReviewSchema = new mongoose.Schema({
 
 const bookSchema = new mongoose.Schema({
   productId: {
-    type: mongoose.Schema.Types.ObjectId,  // Kiểu ObjectId
-    ref: 'Product',  // Tham chiếu đến model Product
-    required: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    default: null
   },
   author: {
     type: String,
-    required: true
+    default: 'No author',
   },
   isbn13: {
     type: String,
-    required: true
+    default: ''
   },
   publisher: {
     type: String,
-    required: true
+    default: ''
   },
   publicationDate: {
     type: Date,
-    required: true
+    default: Date.now
   },
   pages: {
     type: Number,
-    required: true
+    default: 0
   },
   overview: {
     type: String,
-    required: true
+    default: ''
   },
-  editorialReviews: [reviewSchema],
-  customerReviews: [customerReviewSchema]
+  editorialReviews: {
+    type: [reviewSchema],
+    default: []
+  },
+  customerReviews: {
+    type: [customerReviewSchema],
+    default: []
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Book', bookSchema);
