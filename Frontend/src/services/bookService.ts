@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export const getBestsellerBooks = async (): Promise<APIBook[]> => {
   try {
-    const response = await axios.get<APIBook[]>(`${API_URL}/api/books/bestsellers`);
+    const response = await axios.get<APIBook[]>(`${API_URL}/books/bestsellers`);
     return response.data;
   } catch (error) {
     if (error instanceof Error) {
