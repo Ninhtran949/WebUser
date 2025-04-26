@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Book = require('../models/Book');
+const { getBestsellerBooks } = require('../controllers/bookController');
 
 // Get all books
 router.get('/', async (req, res) => {
@@ -22,7 +23,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get book details
+// Get bestseller books - Đặt TRƯỚC route có param tránh hiểu nhầm besteller là :productId
+router.get('/bestsellers', getBestsellerBooks);
+
+// Get book details - Đặt SAU route /bestsellers
 router.get('/:productId', async (req, res) => {
   try {
     const book = await Book.findOne({ productId: req.params.productId })

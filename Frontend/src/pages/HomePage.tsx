@@ -1,10 +1,53 @@
+import { useState, useEffect } from 'react';
 import HeroBanner from '../components/HeroBanner';
 import CategorySection from '../components/CategorySection';
 import PromotionalBanner from '../components/PromotionalBanner';
-import { bookCategories } from '../data/books';
+import { bookCategories, Book, APIBook } from '../data/books';
 import { BookOpenIcon, TrendingUpIcon, SparklesIcon, UsersIcon } from 'lucide-react';
 import { ChevronRightIcon } from 'lucide-react';
+import { getBestsellerBooks } from '../services/bookService';
+
 const HomePage = () => {
+  const [bestsellerBooks, setBestsellerBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchBestsellers = async () => {
+      try {
+        setLoading(true);
+        const data = await getBestsellerBooks();
+        const transformedBooks: Book[] = data.map((book: APIBook) => ({
+          id: parseInt(book._id, 10), // Convert string ID to number
+          title: book.productId?.nameProduct || 'Untitled',
+          author: book.author,
+          price: Number(book.productId?.priceProduct) || 0,
+          coverImage: book.productId?.imgProduct || '',
+          category: book.category || 'Uncategorized',
+          // Thêm các trường tùy chọn
+          isbn13: '',
+          publisher: '',
+          publicationDate: new Date().toISOString(),
+          pages: 0,
+          overview: '',
+          editorialReviews: [],
+          customerReviews: [],
+          discount: undefined,
+          originalPrice: undefined
+        }));
+        setBestsellerBooks(transformedBooks);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        setError(errorMessage);
+        console.error('Failed to fetch bestsellers:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBestsellers();
+  }, []);
+
   return <main className="flex-grow">
       <HeroBanner />
       <section className="bg-white py-6 border-b">
@@ -42,8 +85,36 @@ const HomePage = () => {
         </div>
       </section>
       <PromotionalBanner title="NEW RELEASES" discount="10% OFF" bgColor="bg-gradient-to-r from-purple-900 to-indigo-800" textColor="text-white" />
-      <CategorySection title="Bestsellers" books={bookCategories.bestsellers} columns={6} />
+      {loading ? (
+        <div className="text-center py-8">Loading bestsellers...</div>
+      ) : error ? (
+        <div className="text-center text-red-600 py-8">Error: {error}</div>
+      ) : (
+        <CategorySection 
+          title="Bestsellers" 
+          books={bestsellerBooks.map(book => ({
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            price: book.price,
+            coverImage: book.coverImage,
+            category: book.category, // Thêm trường category bắt buộc
+            // Các trường tùy chọn
+            isbn13: book.isbn13,
+            publisher: book.publisher,
+            publicationDate: book.publicationDate,
+            pages: book.pages,
+            overview: book.overview,
+            editorialReviews: book.editorialReviews,
+            customerReviews: book.customerReviews,
+            discount: book.discount,
+            originalPrice: book.originalPrice
+          }))} 
+          columns={6} 
+        />
+      )}
       <PromotionalBanner title="BESTSELLING BOOKS" discount="20% OFF" bgColor="bg-gradient-to-r from-blue-900 to-blue-700" textColor="text-white" />
+      <CategorySection title="Bestsellers" columns={6} />
       <CategorySection title="Trending Books" books={bookCategories.trending} columns={6} />
       <div className="bg-gradient-to-b from-amber-50 to-amber-100 py-10 px-4 my-8">
         <div className="container mx-auto">
@@ -56,7 +127,7 @@ const HomePage = () => {
               <ChevronRightIcon size={16} className="ml-1" />
             </button>
           </div>
-          <CategorySection books={bookCategories.featured} columns={7} showTitle={false} />
+          <CategorySection title='Featured author' books={bookCategories.featured} columns={7} showTitle={false} />
         </div>
       </div>
       <PromotionalBanner title="SPECIAL OFFERS" discount="50% OFF" bgColor="bg-gradient-to-r from-gray-900 to-gray-700" textColor="text-white" />
@@ -72,7 +143,7 @@ const HomePage = () => {
               <ChevronRightIcon size={16} className="ml-1" />
             </button>
           </div>
-          <CategorySection books={bookCategories.childrens} columns={6} showTitle={false} />
+          <CategorySection title='' books={bookCategories.childrens} columns={6} showTitle={false} />
         </div>
       </div>
       <section className="bg-blue-800 text-white py-12 px-4">

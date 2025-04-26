@@ -13,10 +13,10 @@ export interface Book {
   title: string;
   author: string;
   price: number;
-  originalPrice?: number;
-  discount?: string;
   coverImage: string;
   category: string;
+  discount?: string;
+  originalPrice?: number;
   overview?: string;
   isbn13?: string;
   publisher?: string;
@@ -24,6 +24,16 @@ export interface Book {
   pages?: number;
   editorialReviews?: EditorialReview[];
   customerReviews?: CustomerReview[];
+}
+export interface APIBook {
+  _id: string;
+  productId?: {
+    nameProduct: string;
+    priceProduct: number;
+    imgProduct: string;
+  };
+  author: string;
+  category?: string;
 }
 const generateBooks = (count: number, category: string, startId = 1, discountPercent?: string): Book[] => {
   return Array.from({
