@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get bestseller books - Đặt TRƯỚC route có param
+// Get bestseller books - Đặt TRƯỚC route có param tránh hiểu nhầm besteller là :productId
 router.get('/bestsellers', getBestsellerBooks);
 
 // Get book details - Đặt SAU route /bestsellers
