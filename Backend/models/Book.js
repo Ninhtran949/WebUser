@@ -15,12 +15,15 @@ const customerReviewSchema = new mongoose.Schema({
 const bookSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
-    default: null
+    ref: 'Product'
   },
   author: {
     type: String,
-    default: 'No author',
+    required: true
+  },
+  category: {
+    type: String,
+    default: 'Uncategorized'
   },
   isbn13: {
     type: String,

@@ -65,7 +65,7 @@ app.use('/user', userRouter);
 const cartRouter = require('./routes/cart')(io); // Truyền io vào router
 app.use('/cart', cartRouter);
 const booksRouter = require('./routes/books');
-app.use('/api/books', booksRouter);
+app.use('/books', booksRouter);
 
 
 const paymentZaloRouter = require('./services/paymentzalo');
