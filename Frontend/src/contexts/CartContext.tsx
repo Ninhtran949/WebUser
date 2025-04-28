@@ -8,9 +8,11 @@ interface CartItem {
 interface CartContextType {
   items: CartItem[];
   addItem: (book: Book, quantity?: number) => void;
-  removeItem: (bookId: number) => void;
+  removeItem: (bookId: string) => void;
   clearCart: () => void;
   itemCount: number;
+  increaseQuantity: (bookId: string) => void;
+  decreaseQuantity: (bookId: string) => void;
 }
 const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{
@@ -70,19 +72,39 @@ export const CartProvider: React.FC<{
       }
     });
   };
-  const removeItem = (bookId: number) => {
+  const removeItem = (bookId: string) => {
     setItems(currentItems => currentItems.filter(item => item.book.id !== bookId));
   };
   const clearCart = () => {
     setItems([]);
   };
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
+  const increaseQuantity = (bookId: string) => {
+    setItems(currentItems => 
+      currentItems.map(item => 
+        item.book.id === bookId 
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      )
+    );
+  };
+  const decreaseQuantity = (bookId: string) => {
+    setItems(currentItems => 
+      currentItems.map(item => 
+        item.book.id === bookId && item.quantity > 1
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      )
+    );
+  };
   return <CartContext.Provider value={{
     items,
     addItem,
     removeItem,
     clearCart,
-    itemCount
+    itemCount,
+    increaseQuantity,
+    decreaseQuantity
   }}>
       {children}
     </CartContext.Provider>;
