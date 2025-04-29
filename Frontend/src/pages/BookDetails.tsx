@@ -1,61 +1,123 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ShoppingCartIcon, CheckIcon } from 'lucide-react';
-import { findBookById } from '../data/books';
+import { getBookById } from '../services/bookService';
 import RelatedBooks from '../components/RelatedBooks';
 import EditorialReviews from '../components/EditorialReviews';
 import CustomerReviews from '../components/CustomerReviews';
 import { useCart } from '../contexts/CartContext';
 import SignInDialog from '../components/SignInDialog';
+import { Book, APIBook } from '../data/books';
 
 const BookDetails = () => {
   const { id } = useParams();
-  const book = findBookById(Number(id));
+  const [book, setBook] = useState<Book | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { addItem } = useCart();
   const [isSignInDialogOpen, setIsSignInDialogOpen] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
-  if (!book) {
-    return <div>Book not found</div>;
-  }
+
+  useEffect(() => {
+    const fetchBookDetails = async () => {
+      if (!id) return;
+      try {
+        setError(null);
+        const bookData: APIBook = await getBookById(id);
+        // Transform API data to Book format
+        const transformedBook: Book = {
+          _id: bookData._id,
+          id: bookData._id,
+          title: bookData.productId?.nameProduct || 'Untitled',
+          author: bookData.author,
+          price: Number(bookData.productId?.priceProduct) || 0,
+          coverImage: bookData.productId?.imgProduct || '',
+          category: bookData.category || 'Uncategorized',
+          productId: bookData.productId,
+          isbn13: bookData.isbn13 || '',
+          publisher: bookData.publisher || '',
+          publicationDate: bookData.publicationDate || new Date().toISOString(),
+          pages: bookData.pages || 0,
+          overview: bookData.overview || '',
+          editorialReviews: bookData.editorialReviews || [],
+          customerReviews: bookData.customerReviews || []
+        };
+        setBook(transformedBook);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load book details';
+        setError(errorMessage);
+        console.error('Error fetching book details:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchBookDetails();
+    }
+  }, [id]);
+
   const handleAddToCart = () => {
-    addItem(book);
-    setIsAddedToCart(true);
-    setTimeout(() => setIsAddedToCart(false), 2000);
+    if (book) {
+      addItem(book);
+      setIsAddedToCart(true);
+      setTimeout(() => setIsAddedToCart(false), 2000);
+    }
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-screen">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-800"></div>
+    </div>;
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center min-h-screen">
+      <div className="text-red-600">Error: {error}</div>
+    </div>;
+  }
+
+  if (!book) {
+    return <div className="flex justify-center items-center min-h-screen">
+      <div className="text-gray-600">Book not found</div>
+    </div>;
+  }
+
   return <main className="flex-grow bg-white">
       <div className="container mx-auto px-4 py-8">
-        {/* Book Header */}
         <div className="flex flex-col md:flex-row gap-8">
           {/* Left Column - Image */}
           <div className="md:w-1/3">
-            <img src={book.coverImage} alt={book.title} className="w-full rounded-lg shadow-lg" />
+            <img src={book.coverImage || book.productId?.imgProduct} alt={book.title} className="w-full rounded-lg shadow-lg" />
           </div>
           {/* Right Column - Details */}
           <div className="md:w-2/3">
-            <h1 className="text-3xl font-bold mb-2">{book.title}</h1>
+            <h1 className="text-3xl font-bold mb-2">{book.title || book.productId?.nameProduct}</h1>
             <p className="text-xl text-gray-600 mb-4">by {book.author}</p>
             {/* Price Section */}
             <div className="bg-gray-50 p-6 rounded-lg mb-6">
               <div className="flex items-baseline gap-3 mb-2">
                 <span className="text-2xl font-bold">
-                  ${book.price.toFixed(2)}
+                  ${Number(book.price || book.productId?.priceProduct).toFixed(2)}
                 </span>
-                {book.originalPrice && <span className="text-gray-500 line-through">
-                    ${book.originalPrice.toFixed(2)}
-                  </span>}
-                {book.discount && <span className="text-red-600 font-semibold">
-                    {book.discount}
-                  </span>}
               </div>
               {/* Add to Cart Button */}
-              <button className={`w-full md:w-auto px-8 py-3 rounded-md flex items-center justify-center gap-2 transition ${isAddedToCart ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-blue-800 text-white hover:bg-blue-900'}`} onClick={handleAddToCart}>
-                {isAddedToCart ? <>
+              <button 
+                className={`w-full md:w-auto px-8 py-3 rounded-md flex items-center justify-center gap-2 transition 
+                  ${isAddedToCart ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-blue-800 text-white hover:bg-blue-900'}`} 
+                onClick={handleAddToCart}
+              >
+                {isAddedToCart ? (
+                  <>
                     <CheckIcon size={20} />
                     Added to Cart
-                  </> : <>
+                  </>
+                ) : (
+                  <>
                     <ShoppingCartIcon size={20} />
                     Add to Cart
-                  </>}
+                  </>
+                )}
               </button>
             </div>
             {/* Overview */}
@@ -77,11 +139,15 @@ const BookDetails = () => {
                 </div>
                 <div>
                   <p className="text-gray-600">Publication date:</p>
-                  <p className="font-medium">{book.publicationDate}</p>
+                  <p className="font-medium">{new Date(book.publicationDate).toLocaleDateString()}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Pages:</p>
                   <p className="font-medium">{book.pages}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Category:</p>
+                  <p className="font-medium">{book.category}</p>
                 </div>
               </div>
             </div>
@@ -96,9 +162,12 @@ const BookDetails = () => {
           <CustomerReviews reviews={book.customerReviews} />
         )}
         {/* Related Books */}
-        <RelatedBooks category={book.category} currentBookId={book.id} />
+        {book.category && (
+          <RelatedBooks category={book.category} currentBookId={book._id} />
+        )}
       </div>
       <SignInDialog isOpen={isSignInDialogOpen} onClose={() => setIsSignInDialogOpen(false)} />
     </main>;
 };
+
 export default BookDetails;

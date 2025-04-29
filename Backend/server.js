@@ -28,6 +28,7 @@ db.once('open', () => logger.info('Connected to Database'));
 
 // Middleware
 const corsOptions = {
+    //origin: "*", // Cho phép tất cả các nguồn gốc (origin) truy cập
     origin: process.env.FRONTEND_URL ,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -65,7 +66,7 @@ app.use('/user', userRouter);
 const cartRouter = require('./routes/cart')(io); // Truyền io vào router
 app.use('/cart', cartRouter);
 const booksRouter = require('./routes/books');
-app.use('/api/books', booksRouter);
+app.use('/books', booksRouter);
 
 
 const paymentZaloRouter = require('./services/paymentzalo');
