@@ -148,10 +148,53 @@ router.post('/check-status-order', async (req, res) => {
   try {
     const result = await axios(postConfig);
     console.log('Payment status check result:', result.data);
-    return res.status(200).json(result.data);
+
+    // Map ZaloPay sandbox status to our status codes
+    let mappedResponse = {
+      return_code: 0,
+      return_message: '',
+      sub_return_code: result.data.sub_return_code,
+      sub_return_message: result.data.sub_return_message
+    };
+
+    // Trong môi trường sandbox:
+    // return_code = 1: Thành công
+    // return_code = -1: Đang chờ thanh toán
+    // return_code = 2: Thất bại
+    if (result.data.return_code === 1) {
+      // Thanh toán thành công
+      mappedResponse.return_code = 1;
+      mappedResponse.return_message = 'Payment successful';
+    } 
+    else if (result.data.return_code === -1) {
+      // Đang chờ thanh toán - Trong sandbox, điều này là bình thường
+      mappedResponse.return_code = 0;
+      mappedResponse.return_message = 'Waiting for payment';
+    }
+    else if (result.data.return_code === 2) {
+      // Thanh toán thất bại
+      mappedResponse.return_code = 2;
+      mappedResponse.return_message = 'Payment failed';
+    }
+    else {
+      // Các trường hợp khác, coi như đang chờ
+      mappedResponse.return_code = 0;
+      mappedResponse.return_message = 'Payment processing';
+    }
+
+    // Log để debug
+    console.log('Mapped response:', mappedResponse);
+    console.log('Original response:', result.data);
+
+    return res.status(200).json(mappedResponse);
   } catch (error) {
     console.error('Payment status check error:', error.response ? error.response.data : error.message);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ 
+      return_code: -1,
+      return_message: 'Internal Server Error',
+      sub_return_code: -1,
+      sub_return_message: error.message 
+    });
   }
 });
 

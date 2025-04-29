@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { XIcon, TrashIcon, PlusIcon, MinusIcon } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import SignInDialog from './SignInDialog';
-import { createPayment, checkPaymentStatus, ZaloPaymentResponse, ZaloStatusResponse } from '../services/paymentService';
+import { createPayment, checkPaymentStatus } from '../services/paymentService';
 
 interface CartDialogProps {
   isOpen: boolean;
@@ -60,29 +60,50 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
   };
   
   const startPollingPaymentStatus = (appTransId: string) => {
+    let attempts = 0;
+    const maxAttempts = 60; // Poll for 5 minutes max (60 * 5 seconds)
+    
     const checkInterval = setInterval(async () => {
       try {
+        attempts++;
         const statusResponse = await checkPaymentStatus({
           app_trans_id: appTransId
         });
         
+        console.log('Payment status check:', statusResponse);
+        
         if (statusResponse.return_code === 1) {
+          // Thanh toán thành công
           clearInterval(checkInterval);
           handlePaymentSuccess();
         } 
-        else if (statusResponse.return_code === 2 || statusResponse.return_code === 3) {
+        else if (statusResponse.return_code === 2) {
+          // Thanh toán thất bại
           clearInterval(checkInterval);
-          handlePaymentFailure(statusResponse.return_message);
+          handlePaymentFailure('Payment failed');
         }
+        else if (attempts >= maxAttempts) {
+          // Hết thời gian chờ
+          clearInterval(checkInterval);
+          handlePaymentFailure('Payment timeout. The payment window may have been closed.');
+          setIsProcessing(false);
+        }
+        // Các trường hợp khác (return_code = 0 hoặc -1) tiếp tục poll
+        // Đây là trạng thái bình thường trong sandbox khi đang chờ thanh toán
       } catch (error) {
         console.error('Error checking payment status:', error);
+        if (attempts >= maxAttempts) {
+          clearInterval(checkInterval);
+          handlePaymentFailure('Could not verify payment status');
+          setIsProcessing(false);
+        }
       }
-    }, 5000);
+    }, 5000); // Check every 5 seconds
     
-    setTimeout(() => {
+    // Cleanup function
+    return () => {
       clearInterval(checkInterval);
-      setIsProcessing(false);
-    }, 300000);
+    };
   };
   
   const handlePaymentSuccess = () => {
