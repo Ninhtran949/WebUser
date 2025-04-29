@@ -3,27 +3,100 @@ import { XIcon, TrashIcon, PlusIcon, MinusIcon } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import SignInDialog from './SignInDialog';
+import { createPayment, checkPaymentStatus, ZaloPaymentResponse, ZaloStatusResponse } from '../services/paymentService';
+
 interface CartDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
 const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
   const { items, removeItem, clearCart, itemCount, increaseQuantity, decreaseQuantity } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [isSignInDialogOpen, setIsSignInDialogOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentTransId, setPaymentTransId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const totalPrice = items.reduce((total, item) => total + item.book.price * item.quantity, 0);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!isAuthenticated) {
       setIsSignInDialogOpen(true);
-    } else {
-      // In a real app, this would navigate to checkout
-      alert('Proceeding to checkout...');
+      return;
+    }
+    
+    try {
+      setIsProcessing(true);
+      
+      const itemDescriptions = items.map(item => 
+        `${item.book.title} x${item.quantity}`
+      ).join(', ');
+      
+      const description = `Book order: ${itemDescriptions}`;
+      const amountInVND = Math.round(totalPrice * 23000);
+      
+      const response = await createPayment({
+        app_user: user?.id || 'guest',
+        amount: amountInVND,
+        description: description
+      });
+      
+      if (response && response.order_url) {
+        setPaymentTransId(response.app_trans_id);
+        window.open(response.order_url, '_blank');
+        console.log('Payment created with transaction ID:', response.app_trans_id);
+        startPollingPaymentStatus(response.app_trans_id);
+      } else {
+        alert('Failed to create payment. Please try again.');
+        setIsProcessing(false);
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('An error occurred while processing your payment. Please try again.');
+      setIsProcessing(false);
     }
   };
+  
+  const startPollingPaymentStatus = (appTransId: string) => {
+    const checkInterval = setInterval(async () => {
+      try {
+        const statusResponse = await checkPaymentStatus({
+          app_trans_id: appTransId
+        });
+        
+        if (statusResponse.return_code === 1) {
+          clearInterval(checkInterval);
+          handlePaymentSuccess();
+        } 
+        else if (statusResponse.return_code === 2 || statusResponse.return_code === 3) {
+          clearInterval(checkInterval);
+          handlePaymentFailure(statusResponse.return_message);
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error);
+      }
+    }, 5000);
+    
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      setIsProcessing(false);
+    }, 300000);
+  };
+  
+  const handlePaymentSuccess = () => {
+    setIsProcessing(false);
+    alert('Payment successful! Your order has been placed.');
+    clearCart(); // Clear the cart after successful payment
+    onClose(); // Close the cart dialog
+  };
+  
+  const handlePaymentFailure = (message: string) => {
+    setIsProcessing(false);
+    alert(`Payment failed: ${message}`);
+  };
+
   return <>
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg w-full max-w-2xl relative">
@@ -106,8 +179,16 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
                   <TrashIcon size={16} className="mr-1" />
                   Clear Cart
                 </button>
-                <button onClick={handleCheckout} className="bg-blue-800 text-white px-6 py-2 rounded hover:bg-blue-900 transition">
-                  {isAuthenticated ? 'Proceed to Checkout' : 'Sign In to Checkout'}
+                <button 
+                  onClick={handleCheckout} 
+                  className="bg-blue-800 text-white px-6 py-2 rounded hover:bg-blue-900 transition"
+                  disabled={isProcessing}
+                >
+                  {isProcessing 
+                    ? 'Processing...' 
+                    : isAuthenticated 
+                      ? 'Pay with ZaloPay' 
+                      : 'Sign In to Checkout'}
                 </button>
               </div>
             </>
@@ -118,4 +199,5 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
     <SignInDialog isOpen={isSignInDialogOpen} onClose={() => setIsSignInDialogOpen(false)} />
   </>;
 };
+
 export default CartDialog;
