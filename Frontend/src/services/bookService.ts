@@ -86,3 +86,15 @@ export const getRelatedBooks = async (category: string, currentBookId: string): 
     throw new Error('An unknown error occurred while fetching related books');
   }
 };
+
+export const getBooksByCategory = async (codeCategory: string): Promise<APIBook[]> => {
+  try {
+    const response = await axios.get<APIBook[]>(`${API_URL}/products/category/${codeCategory}`);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch books by category: ${error.message}`);
+    }
+    throw new Error('An unknown error occurred while fetching category books');
+  }
+};

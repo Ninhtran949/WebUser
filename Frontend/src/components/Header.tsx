@@ -347,13 +347,12 @@ const Header = () => {
                   onMouseEnter={() => handleCategoryHover(item.category)}
                 >
                   <div className="h-full flex items-center px-4">
-                    <a 
-                      href="#" 
+                    <Link 
+                      to={`/collection/${item.category}`}
                       className="flex items-center h-full hover:text-blue-800 transition-colors font-medium"
-                      onClick={e => e.preventDefault()}
                     >
                       {item.title}
-                    </a>
+                    </Link>
                   </div>
                 </li>
               ))}

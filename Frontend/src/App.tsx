@@ -8,6 +8,7 @@ import Footer from './components/Footer';
 import SupportButton from './components/SupportButton';
 import HomePage from './pages/HomePage';
 import BookDetails from './pages/BookDetails';
+import CollectionPage from './pages/CollectionPage';
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/book/:id" element={<BookDetails />} />
-                  <Route path="/collection/:category" element={<HomePage />} />
+                  <Route path="/collection/:category" element={<CollectionPage />} />
                 </Routes>
                 <Footer />
                 <SupportButton />

@@ -131,7 +131,23 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
           {items.length === 0 ? (
             <div className="text-center py-8">
               <div className="flex justify-center mb-4">
-                <img src="Pic for emty cart" alt="Empty cart pic" className="w-32 h-32 opacity-60" />
+                {/* Thay thế hình ảnh bằng SVG icon */}
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="w-32 h-32 text-gray-300" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor" 
+                  strokeWidth={1}
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" 
+                  />
+                  <circle cx="9" cy="19" r="1" />
+                  <circle cx="15" cy="19" r="1" />
+                </svg>
               </div>
               <p className="text-gray-500 mb-4">Your cart is empty</p>
               <button onClick={onClose} className="bg-blue-800 text-white px-6 py-2 rounded hover:bg-blue-900 transition">

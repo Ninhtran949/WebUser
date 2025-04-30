@@ -2,8 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { ArrowLeftIcon, ArrowRightIcon, BookOpenIcon, StarIcon, TrendingUpIcon, ChevronRightIcon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import SignInDialog from './SignInDialog';
+import { useNavigate } from 'react-router-dom'
 
 const HeroBanner = () => {
+  const navigate = useNavigate()
   const { isAuthenticated } = useAuth();
   const [showSignInDialog, setShowSignInDialog] = useState(false);
   const bestsellerSectionRef = useRef(null);
@@ -98,7 +100,9 @@ const HeroBanner = () => {
                 <BookOpenIcon size={18} className="mr-2" />
                 Shop Now
               </button>
-              <button className="border-2 border-blue-800 text-blue-800 px-6 py-3 rounded-md hover:bg-blue-100 transition flex items-center">
+              <button 
+                onClick={() => navigate('/collection/books')}
+                className="border-2 border-blue-800 text-blue-800 px-6 py-3 rounded-md hover:bg-blue-100 transition flex items-center">
                 View Collections
                 <ChevronRightIcon size={18} className="ml-1" />
               </button>

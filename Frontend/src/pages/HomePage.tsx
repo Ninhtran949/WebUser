@@ -97,12 +97,12 @@ const HomePage = () => {
     <section className="bg-white py-6 border-b">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div onClick={() => navigate("/collection/bestseller")}
+          <div 
+            onClick={() => navigate("/collection/bestsellers")}
             className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition cursor-pointer"
-            role='button'
+            role="button"
             tabIndex={0}
           >
-
             <div className="bg-blue-100 p-3 rounded-full mb-3">
               <TrendingUpIcon size={24} className="text-blue-800" />
             </div>
@@ -112,8 +112,9 @@ const HomePage = () => {
           <div
             onClick={() => navigate("/collection/new-releases")}
             className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition cursor-pointer"
-            role='button'
-            tabIndex={0}>
+            role="button"
+            tabIndex={0}
+          >
             <div className="bg-green-100 p-3 rounded-full mb-3">
               <SparklesIcon size={24} className="text-green-800" />
             </div>
@@ -121,26 +122,28 @@ const HomePage = () => {
             <p className="text-xs text-gray-600 mt-1">Fresh off the press</p>
           </div>
           <div
-            onClick={() => navigate("/collection/book-club")}
+            onClick={() => navigate("/collection/fiction")}
             className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition cursor-pointer"
-            role='button'
-            tabIndex={0}>
+            role="button"
+            tabIndex={0}
+          >
             <div className="bg-purple-100 p-3 rounded-full mb-3">
               <BookOpenIcon size={24} className="text-purple-800" />
             </div>
-            <h3 className="font-medium">Book Club</h3>
-            <p className="text-xs text-gray-600 mt-1">Join the discussion</p>
+            <h3 className="font-medium">Fiction</h3>
+            <p className="text-xs text-gray-600 mt-1">Popular stories</p>
           </div>
           <div
-            onClick={() => navigate("/collection/author-events")}
+            onClick={() => navigate("/collection/non-fiction")}
             className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition cursor-pointer"
-            role='button'
-            tabIndex={0}>
+            role="button"
+            tabIndex={0}
+          >
             <div className="bg-amber-100 p-3 rounded-full mb-3">
               <UsersIcon size={24} className="text-amber-800" />
             </div>
-            <h3 className="font-medium">Author Events</h3>
-            <p className="text-xs text-gray-600 mt-1">Meet your favorites</p>
+            <h3 className="font-medium">Non-Fiction</h3>
+            <p className="text-xs text-gray-600 mt-1">Real-world knowledge</p>
           </div>
         </div>
       </div>
