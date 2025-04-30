@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ArrowLeftIcon, ArrowRightIcon, BookOpenIcon, StarIcon, TrendingUpIcon, ChevronRightIcon } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import SignInDialog from './SignInDialog';
+
 const HeroBanner = () => {
+  const { isAuthenticated } = useAuth();
+  const [showSignInDialog, setShowSignInDialog] = useState(false);
+  const bestsellerSectionRef = useRef(null);
   const slides = [{
     title: 'Bestselling Books',
     description: 'Discover the latest bestsellers and must-read titles',
@@ -50,6 +56,18 @@ const HeroBanner = () => {
       setTimeout(() => setIsTransitioning(false), 500);
     }
   };
+  const handleShopNowClick = () => {
+    if (isAuthenticated) {
+      // User is logged in, scroll to bestseller section
+      const bestsellerSection = document.getElementById('bestseller-section');
+      if (bestsellerSection) {
+        bestsellerSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // User is not logged in, show sign in dialog
+      setShowSignInDialog(true);
+    }
+  };
   return <div className={`w-full py-12 px-4 transition-colors duration-500 relative ${slides[currentSlide].color}`}>
       <div className="container mx-auto max-w-5xl">
         <div className="hidden md:block">
@@ -73,7 +91,10 @@ const HeroBanner = () => {
               {slides[currentSlide].description}
             </p>
             <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-              <button className="bg-blue-800 text-white px-6 py-3 rounded-md hover:bg-blue-900 transition shadow-lg flex items-center">
+              <button 
+                className="bg-blue-800 text-white px-6 py-3 rounded-md hover:bg-blue-900 transition shadow-lg flex items-center"
+                onClick={handleShopNowClick}
+              >
                 <BookOpenIcon size={18} className="mr-2" />
                 Shop Now
               </button>
@@ -107,6 +128,12 @@ const HeroBanner = () => {
           </button>
         </div>
       </div>
+      {showSignInDialog && (
+        <SignInDialog 
+          isOpen={showSignInDialog} 
+          onClose={() => setShowSignInDialog(false)} 
+        />
+      )}
     </div>;
 };
 export default HeroBanner;
