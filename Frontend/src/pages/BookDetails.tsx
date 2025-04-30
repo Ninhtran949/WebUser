@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { ShoppingCartIcon, CheckIcon } from 'lucide-react';
+import { ShoppingCartIcon, CheckIcon, HeartIcon } from 'lucide-react';
 import { getBookById } from '../services/bookService';
 import RelatedBooks from '../components/RelatedBooks';
 import EditorialReviews from '../components/EditorialReviews';
 import CustomerReviews from '../components/CustomerReviews';
 import { useCart } from '../contexts/CartContext';
+import { useFavorites } from '../contexts/FavoriteContext';
 import SignInDialog from '../components/SignInDialog';
 import { Book, APIBook } from '../data/books';
 
@@ -15,8 +16,10 @@ const BookDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { addItem } = useCart();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const [isSignInDialogOpen, setIsSignInDialogOpen] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const [isAddedToFavorite, setIsAddedToFavorite] = useState(false);
 
   useEffect(() => {
     const fetchBookDetails = async () => {
@@ -65,6 +68,25 @@ const BookDetails = () => {
     }
   };
 
+  const handleToggleFavorite = () => {
+    if (!book) return;
+    
+    if (isFavorite(book.id)) {
+      removeFromFavorites(book.id);
+      setIsAddedToFavorite(false);
+    } else {
+      addToFavorites(book);
+      setIsAddedToFavorite(true);
+      setTimeout(() => setIsAddedToFavorite(false), 2000);
+    }
+  };
+
+  useEffect(() => {
+    if (book) {
+      setIsAddedToFavorite(isFavorite(book.id));
+    }
+  }, [book, isFavorite]);
+
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">
       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-800"></div>
@@ -87,8 +109,18 @@ const BookDetails = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Left Column - Image */}
-          <div className="md:w-1/3">
+          <div className="md:w-1/3 relative group">
             <img src={book.coverImage || book.productId?.imgProduct} alt={book.title} className="w-full rounded-lg shadow-lg" />
+            <button 
+              onClick={handleToggleFavorite}
+              className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-100"
+              aria-label={isAddedToFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <HeartIcon 
+                size={20} 
+                className={isAddedToFavorite ? "fill-red-500 text-red-500" : "text-gray-600"}
+              />
+            </button>
           </div>
           {/* Right Column - Details */}
           <div className="md:w-2/3">
@@ -96,29 +128,44 @@ const BookDetails = () => {
             <p className="text-xl text-gray-600 mb-4">by {book.author}</p>
             {/* Price Section */}
             <div className="bg-gray-50 p-6 rounded-lg mb-6">
-              <div className="flex items-baseline gap-3 mb-2">
+              <div className="flex items-baseline gap-3 mb-4">
                 <span className="text-2xl font-bold">
                   ${Number(book.price || book.productId?.priceProduct).toFixed(2)}
                 </span>
               </div>
-              {/* Add to Cart Button */}
-              <button 
-                className={`w-full md:w-auto px-8 py-3 rounded-md flex items-center justify-center gap-2 transition 
-                  ${isAddedToCart ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-blue-800 text-white hover:bg-blue-900'}`} 
-                onClick={handleAddToCart}
-              >
-                {isAddedToCart ? (
-                  <>
-                    <CheckIcon size={20} />
-                    Added to Cart
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCartIcon size={20} />
-                    Add to Cart
-                  </>
-                )}
-              </button>
+              <div className="flex gap-3">
+                {/* Add to Cart Button */}
+                <button 
+                  className={`flex-1 px-8 py-3 rounded-md flex items-center justify-center gap-2 transition 
+                    ${isAddedToCart ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-blue-800 text-white hover:bg-blue-900'}`} 
+                  onClick={handleAddToCart}
+                >
+                  {isAddedToCart ? (
+                    <>
+                      <CheckIcon size={20} />
+                      Added to Cart
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCartIcon size={20} />
+                      Add to Cart
+                    </>
+                  )}
+                </button>
+                {/* Add to Favorites Button */}
+                <button 
+                  onClick={handleToggleFavorite}
+                  className={`px-4 py-3 rounded-md flex items-center justify-center transition
+                    ${isAddedToFavorite 
+                      ? 'bg-red-50 text-red-500 border-2 border-red-500' 
+                      : 'border-2 border-gray-300 text-gray-600 hover:border-red-500 hover:text-red-500'}`}
+                >
+                  <HeartIcon 
+                    size={20} 
+                    className={isAddedToFavorite ? "fill-red-500" : ""}
+                  />
+                </button>
+              </div>
             </div>
             {/* Overview */}
             <div className="mb-8">
