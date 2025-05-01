@@ -31,9 +31,9 @@ const BookDetails = () => {
         const transformedBook: Book = {
           _id: bookData._id,
           id: bookData._id,
-          title: bookData.productId?.nameProduct || 'Untitled',
-          author: bookData.author,
-          price: Number(bookData.productId?.priceProduct) || 0,
+          title: bookData.productId?.nameProduct || bookData.title || 'Untitled',
+          author: bookData.productId?.userPartner || bookData.author || 'Unknown',
+          price: parseFloat(bookData.productId?.priceProduct || '0'),
           coverImage: bookData.productId?.imgProduct || '',
           category: bookData.category || 'Uncategorized',
           productId: bookData.productId,

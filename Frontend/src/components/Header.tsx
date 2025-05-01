@@ -88,7 +88,7 @@ const Header = () => {
     }]
   }, {
     title: 'New Releases',
-    category: 'newReleases',
+    category: 'new-releases',
     featuredCategories: [{
       name: 'Coming Soon',
       image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
@@ -121,8 +121,8 @@ const Header = () => {
       links: ['Book Club Picks', 'Staff Recommendations', 'Award Winners']
     }]
   }, {
-    title: 'Non-Fiction',
-    category: 'nonFiction',
+    title: 'Non Fiction',
+    category: 'non-fiction',
     featuredCategories: [{
       name: 'Biographies',
       image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'

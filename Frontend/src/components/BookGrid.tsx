@@ -6,12 +6,24 @@ import { useFavorites } from '../contexts/FavoriteContext';
 
 interface BookGridProps {
   books: Book[];
+  columns?: number;
 }
 
-const BookGrid = ({ books }: BookGridProps) => {
+const BookGrid = ({ books, columns = 6 }: BookGridProps) => {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+
+  const gridColumns = {
+    2: 'grid-cols-1 sm:grid-cols-2',
+    3: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3',
+    4: 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
+    5: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
+    6: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6',
+    7: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7'
+  };
+
+  const gridClass = gridColumns[columns as keyof typeof gridColumns] || gridColumns[6];
 
   const handleBookClick = (id: string, e: React.MouseEvent) => {
     // Kiểm tra xem click có xuất phát từ các button không
@@ -41,7 +53,7 @@ const BookGrid = ({ books }: BookGridProps) => {
   };
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    <div className={`grid ${gridClass} gap-4`}>
       {books.map((book) => (
         <div 
           key={book.id} 

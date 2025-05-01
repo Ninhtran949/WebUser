@@ -87,11 +87,45 @@ export const getRelatedBooks = async (category: string, currentBookId: string): 
   }
 };
 
+interface ProductType {
+  _id: string;
+  codeCategory: string;
+  codeProduct: string;
+  imgProduct: string;
+  nameProduct: string;
+  priceProduct: string;
+  userPartner: string;
+}
+
 export const getBooksByCategory = async (codeCategory: string): Promise<APIBook[]> => {
   try {
-    const response = await axios.get<APIBook[]>(`${API_URL}/products/category/${codeCategory}`);
-    return response.data;
+    const response = await axios.get<ProductType[]>(`${API_URL}/products/category/${codeCategory}`);
+    console.log('Raw product response:', response.data);
+    
+    return response.data.map(product => ({
+      _id: product._id,
+      productId: {
+        _id: product._id,
+        codeCategory: product.codeCategory,
+        codeProduct: product.codeProduct,
+        imgProduct: product.imgProduct,
+        nameProduct: product.nameProduct,
+        priceProduct: product.priceProduct,
+        userPartner: product.userPartner
+      },
+      title: product.nameProduct,
+      author: product.userPartner,
+      isbn13: '',
+      publisher: '',
+      publicationDate: new Date().toISOString(),
+      pages: 0,
+      overview: '',
+      editorialReviews: [],
+      customerReviews: [],
+      category: 'General'
+    }));
   } catch (error) {
+    console.error('Error in getBooksByCategory:', error);
     if (error instanceof Error) {
       throw new Error(`Failed to fetch books by category: ${error.message}`);
     }

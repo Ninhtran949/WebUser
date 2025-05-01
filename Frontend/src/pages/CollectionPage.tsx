@@ -32,7 +32,6 @@ const CollectionPage = () => {
   const navigate = useNavigate();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryParam || 'books');
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,23 +54,27 @@ const CollectionPage = () => {
       setError(null);
       try {
         const response = await getBooksByCategory(category.codeCategory);
-        let transformedBooks = response.map(book => ({
-          _id: book._id,
-          id: book._id,
-          title: book.productId?.nameProduct || 'Untitled',
-          author: book.productId?.userPartner || book.author || 'Unknown',
-          price: Number(book.productId?.priceProduct) || 0,
-          coverImage: book.productId?.imgProduct || '',
-          category: category.title,
-          productId: book.productId || null,
-          isbn13: book.isbn13 || '',
-          publisher: book.publisher || '',
-          publicationDate: book.publicationDate || new Date().toISOString(),
-          pages: book.pages || 0,
-          overview: book.overview || '',
-          editorialReviews: book.editorialReviews || [],
-          customerReviews: book.customerReviews || []
-        }));
+        console.log('Raw response:', response); // For debugging
+
+        let transformedBooks = response
+          .filter(book => book.productId) // Only include books with productId
+          .map(book => ({
+            _id: book._id,
+            id: book._id,
+            title: book.productId?.nameProduct || book.title || 'Untitled',
+            author: book.productId?.userPartner || book.author || 'Unknown',
+            price: parseFloat(book.productId?.priceProduct || '0'),
+            coverImage: book.productId?.imgProduct || '',
+            category: category.title,
+            productId: book.productId || null,
+            isbn13: book.isbn13 || '',
+            publisher: book.publisher || '',
+            publicationDate: book.publicationDate || new Date().toISOString(),
+            pages: book.pages || 0,
+            overview: book.overview || '',
+            editorialReviews: book.editorialReviews || [],
+            customerReviews: book.customerReviews || []
+          }));
 
         // Sort books based on selected order
         switch (sortOrder) {
@@ -89,9 +92,11 @@ const CollectionPage = () => {
             break;
         }
 
+        console.log('Transformed books:', transformedBooks); // For debugging
         setBooks(transformedBooks);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch books');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch books';
+        setError(errorMessage);
         console.error('Error fetching books:', err);
       } finally {
         setLoading(false);

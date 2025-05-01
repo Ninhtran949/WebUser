@@ -16,6 +16,21 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get products by category - MOVED UP
+router.get('/category/:codeCategory', async (req, res) => {
+  try {
+      console.log("Fetching products for category:", req.params.codeCategory);
+      const products = await Product.find({ codeCategory: req.params.codeCategory });
+      if (products.length === 0) {
+          return res.status(404).json({ message: "No products found for this category" });
+      }
+      console.log(`Found ${products.length} products`);
+      res.json(products);
+  } catch (err) {
+      console.error("Error fetching products by category:", err);
+      res.status(500).json({ message: err.message });
+  }
+});
 
 // Lấy một sản phẩm cụ thể theo ID
 router.get('/:id', getProduct, (req, res) => {
@@ -109,18 +124,5 @@ async function getProduct(req, res, next) {
   res.product = product;
   next();
 }
-
-router.get('/category/:codeCategory', async (req, res) => {
-  try {
-      const products = await Product.find({ codeCategory: req.params.codeCategory });
-      if (products.length === 0) {
-          return res.status(404).json({ message: "No products found for this category" });
-      }
-      res.json(products);
-  } catch (err) {
-      res.status(500).json({ message: err.message });
-  }
-});
-
 
 module.exports = router;
