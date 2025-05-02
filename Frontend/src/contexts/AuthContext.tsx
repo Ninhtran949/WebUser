@@ -109,13 +109,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await axios.post<SignupResponse>(`${API_URL}/user/signup`, {
         ...userData,
-        id: Math.random().toString(36).substr(2, 9),
+        id: userData.phoneNumber, // Sử dụng phoneNumber làm id
       });
 
       // Auto login after successful signup
       await login(userData.phoneNumber, userData.password);
-      
-      // Không return response.data nữa
     } catch (error) {
       console.error('Signup error:', error);
       throw error;

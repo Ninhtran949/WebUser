@@ -153,11 +153,35 @@ router.post('/token', async (req, res) => {
 // tạo user
 router.post('/signup', async (req, res) => {
   try {
-    console.log('Request Body:', req.body); // Log dữ liệu nhận từ client
+    console.log('Request Body:', req.body);
+
+    // Validate phone number
+    const phoneRegex = /^(0|84|\+84)[3|5|7|8|9][0-9]{8}$/;
+    if (!phoneRegex.test(req.body.phoneNumber)) {
+      return res.status(400).json({ 
+        message: 'Invalid phone number format. Please enter a valid Vietnamese phone number.' 
+      });
+    }
+
+    // Validate password
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{6,}$/;
+    if (!passwordRegex.test(req.body.password)) {
+      return res.status(400).json({ 
+        message: 'Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.' 
+      });
+    }
+    
+    // Kiểm tra số điện thoại đã tồn tại chưa
+    const existingUser = await User.findOne({ phoneNumber: req.body.phoneNumber });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Phone number already exists' });
+    }
+
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    
     const user = new User({
       address: req.body.address,
-      id: req.body.id,
+      id: req.body.phoneNumber, // Sử dụng phoneNumber làm id
       name: req.body.name,
       password: hashedPassword,
       phoneNumber: req.body.phoneNumber,

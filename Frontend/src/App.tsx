@@ -9,6 +9,7 @@ import SupportButton from './components/SupportButton';
 import HomePage from './pages/HomePage';
 import BookDetails from './pages/BookDetails';
 import CollectionPage from './pages/CollectionPage';
+import UserAccount from './pages/UserAccount';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/book/:id" element={<BookDetails />} />
                   <Route path="/collection/:category" element={<CollectionPage />} />
+                  <Route path="/account/*" element={<UserAccount />} />
                 </Routes>
                 <Footer />
                 <SupportButton />

@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
   id: {
     type: String,
     required: true,
-
+    unique: true // Đảm bảo id là duy nhất
   },
   name: {
     type: String,
@@ -30,7 +30,8 @@ const userSchema = new mongoose.Schema({
   },
   phoneNumber: {
     type: String,
-    required: true
+    required: true,
+    unique: true // Đảm bảo phoneNumber là duy nhất
   },
   strUriAvatar: {
     type: String,
@@ -38,7 +39,18 @@ const userSchema = new mongoose.Schema({
     set: encrypt,
     get: decrypt
   }
-}, { toJSON: { getters: true } });
+}, { 
+  toJSON: { getters: true },
+  // Thêm pre-save middleware để đảm bảo id = phoneNumber
+  pre: [
+    ['save', function(next) {
+      if (this.isModified('phoneNumber')) {
+        this.id = this.phoneNumber;
+      }
+      next();
+    }]
+  ]
+});
 
 // Function to encrypt data
 function encrypt(value) {

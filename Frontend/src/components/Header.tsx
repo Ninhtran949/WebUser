@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MenuIcon, SearchIcon, UserIcon, ShoppingCartIcon, LogOutIcon, HomeIcon, HeartIcon,BookmarkIcon } from 'lucide-react';
+import { MenuIcon, SearchIcon, UserIcon, ShoppingCartIcon, LogOutIcon, HomeIcon, HeartIcon, BookmarkIcon } from 'lucide-react';
 import SignInDialog from './SignInDialog';
 import CategoryDropdown from './CategoryDropdown';
 import CartDialog from './CartDialog';
@@ -264,15 +264,15 @@ const Header = () => {
                         <p className="text-xs text-gray-500">{user?.phoneNumber}</p>
                       </div>
                       <div className="py-1">
-                        <button className="w-full text-left px-4 py-2 hover:bg-gray-100">
+                        <Link to="/account/profile" className="w-full text-left px-4 py-2 hover:bg-gray-100 block">
                           My Account
-                        </button>
-                        <button className="w-full text-left px-4 py-2 hover:bg-gray-100">
+                        </Link>
+                        <Link to="/account/orders" className="w-full text-left px-4 py-2 hover:bg-gray-100 block">
                           Order History
-                        </button>
-                        <button className="w-full text-left px-4 py-2 hover:bg-gray-100">
+                        </Link>
+                        <Link to="/account/favorites" className="w-full text-left px-4 py-2 hover:bg-gray-100 block">
                           Saved Items
-                        </button>
+                        </Link>
                       </div>
                       <div className="border-t border-gray-100 mt-1 pt-1">
                         <button 
