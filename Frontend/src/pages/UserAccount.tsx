@@ -3,18 +3,7 @@ import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext';
 import { useFavorites } from '../contexts/FavoriteContext';
 import { UserIcon, ShoppingBagIcon, HeartIcon, CreditCardIcon, MapPinIcon, ChevronRightIcon, LogOutIcon, BellIcon } from 'lucide-react';
-
-interface OrderHistory {
-  idBill: string;
-  dayOut: string;
-  total: number;
-  status: string;
-  Cart: {
-    nameProduct: string;
-    numberProduct: number;
-    priceProduct: number;
-  }[];
-}
+import type { Cart, OrderHistory, TransformedBill } from '../types/bill';
 
 const UserAccount = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -37,11 +26,44 @@ const UserAccount = () => {
       
       setLoading(true);
       try {
-        const response = await fetch(`/bills/user/${user.phoneNumber}`);
-        if (!response.ok) throw new Error('Failed to fetch orders');
-        const data = await response.json();
-        setOrders(data);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/bills/cart/user/${user.phoneNumber}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          }
+        });
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            setOrders([]);
+            return;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const cartItems: Cart[] = await response.json();
+        
+        // Group cart items by idBill
+        const groupedOrders = cartItems.reduce((acc: TransformedBill, item: Cart) => {
+          const billId = item.idCart.toString();
+          if (!acc[billId]) {
+            acc[billId] = [];
+          }
+          acc[billId].push(item);
+          return acc;
+        }, {});
+
+        // Transform into OrderHistory format
+        const transformedOrders: OrderHistory[] = Object.entries(groupedOrders).map(([billId, items]) => ({
+          idBill: billId,
+          dayOut: new Date().toISOString(),
+          total: items.reduce((sum, item) => sum + (item.totalPrice || 0), 0),
+          status: 'completed',
+          Cart: items
+        }));
+
+        setOrders(transformedOrders);
       } catch (err) {
+        console.error('Error fetching orders:', err);
         setError(err instanceof Error ? err.message : 'Failed to load orders');
       } finally {
         setLoading(false);
@@ -214,10 +236,11 @@ const ProfileSettings = ({ user }: { user: any }) => {
     setMessage(null);
 
     try {
-      const response = await fetch(`/user/id/${formData.phoneNumber}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/user/id/${formData.phoneNumber}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
         body: JSON.stringify({
           name: formData.name,
@@ -245,10 +268,11 @@ const ProfileSettings = ({ user }: { user: any }) => {
     }
 
     try {
-      const response = await fetch(`/user/change-password/${formData.phoneNumber}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/user/change-password/${formData.phoneNumber}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
         body: JSON.stringify({
           oldPassword: formData.oldPassword,
