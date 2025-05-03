@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { XIcon, TrashIcon, PlusIcon, MinusIcon } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import SignInDialog from './SignInDialog';
+import OrderConfirmDialog from './OrderConfirmDialog';
 import { createPayment, checkPaymentStatus } from '../services/paymentService';
 
 interface CartDialogProps {
@@ -14,19 +15,22 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
   const { items, removeItem, clearCart, itemCount, increaseQuantity, decreaseQuantity } = useCart();
   const { isAuthenticated, user } = useAuth();
   const [isSignInDialogOpen, setIsSignInDialogOpen] = useState(false);
+  const [isOrderConfirmOpen, setIsOrderConfirmOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentTransId, setPaymentTransId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const totalPrice = items.reduce((total, item) => total + item.book.price * item.quantity, 0);
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!isAuthenticated) {
       setIsSignInDialogOpen(true);
       return;
     }
-    
+    setIsOrderConfirmOpen(true);
+  };
+
+  const handleConfirmOrder = async () => {
     try {
       setIsProcessing(true);
       
@@ -44,7 +48,6 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
       });
       
       if (response && response.order_url) {
-        setPaymentTransId(response.app_trans_id);
         window.open(response.order_url, '_blank');
         console.log('Payment created with transaction ID:', response.app_trans_id);
         startPollingPaymentStatus(response.app_trans_id);
@@ -224,7 +227,7 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
                   {isProcessing 
                     ? 'Processing...' 
                     : isAuthenticated 
-                      ? 'Pay with ZaloPay' 
+                      ? 'Proceed to Checkout' 
                       : 'Sign In to Checkout'}
                 </button>
               </div>
@@ -234,6 +237,11 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
       </div>
     </div>
     <SignInDialog isOpen={isSignInDialogOpen} onClose={() => setIsSignInDialogOpen(false)} />
+    <OrderConfirmDialog 
+      isOpen={isOrderConfirmOpen} 
+      onClose={() => setIsOrderConfirmOpen(false)} 
+      onConfirm={handleConfirmOrder}
+    />
   </>;
 };
 

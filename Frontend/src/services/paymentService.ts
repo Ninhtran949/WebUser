@@ -32,6 +32,20 @@ export interface ZaloStatusResponse {
   amount?: number;
 }
 
+interface PaymentDetails {
+  orderId: string;
+  amount: number;
+  items: Array<{
+    id: string;
+    quantity: number;
+    price: number;
+  }>;
+}
+
+interface ZaloPaymentUrlResponse {
+  paymentUrl: string;
+}
+
 // API functions
 export const createPayment = async (paymentData: PaymentRequest): Promise<ZaloPaymentResponse> => {
   const response = await axios.post<ZaloPaymentResponse>(`${API_URL}/zalopay/payment`, paymentData);
@@ -41,4 +55,34 @@ export const createPayment = async (paymentData: PaymentRequest): Promise<ZaloPa
 export const checkPaymentStatus = async (statusData: StatusCheckRequest): Promise<ZaloStatusResponse> => {
   const response = await axios.post<ZaloStatusResponse>(`${API_URL}/zalopay/check-status-order`, statusData);
   return response.data;
+};
+
+export const initiatePayment = async (paymentDetails: PaymentDetails) => {
+  try {
+    const response = await axios.post('/payment/initiate', paymentDetails);
+    return response.data;
+  } catch (error) {
+    console.error('Error initiating payment:', error);
+    throw error;
+  }
+};
+
+export const processZaloPayment = async (orderId: string) => {
+  try {
+    const response = await axios.post<ZaloPaymentUrlResponse>('/payment/zalo', { orderId });
+    window.location.href = response.data.paymentUrl;
+  } catch (error) {
+    console.error('Error processing ZaloPay payment:', error);
+    throw error;
+  }
+};
+
+export const verifyPayment = async (paymentId: string) => {
+  try {
+    const response = await axios.get(`/payment/verify/${paymentId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    throw error;
+  }
 };
