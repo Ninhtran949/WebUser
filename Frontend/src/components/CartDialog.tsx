@@ -5,6 +5,37 @@ import { useAuth } from '../contexts/AuthContext';
 import SignInDialog from './SignInDialog';
 import OrderConfirmDialog from './OrderConfirmDialog';
 import { createPayment, checkPaymentStatus } from '../services/paymentService';
+import axios from 'axios';
+
+// Add interfaces for API responses
+interface BillResponse {
+  message: string;
+  billId: string;
+}
+
+interface BillItem {
+  idCart: number;
+  idCategory: number;
+  idPartner: string;
+  idProduct: number;
+  imgProduct: string;
+  nameProduct: string;
+  numberProduct: number;
+  priceProduct: number;
+  totalPrice: number;
+  userClient: string;
+}
+
+interface Bill {
+  Cart: BillItem[];
+  dayOut: string;
+  idBill: number;
+  idClient: string;
+  idPartner: string;
+  status: string;
+  timeOut: string;
+  total: number;
+}
 
 interface CartDialogProps {
   isOpen: boolean;
@@ -112,10 +143,51 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
   const handlePaymentSuccess = () => {
     setIsProcessing(false);
     alert('Payment successful! Your order has been placed.');
-    clearCart(); // Clear the cart after successful payment
-    onClose(); // Close the cart dialog
-  };
-  
+    
+    // Tạo bill từ cart items
+    if (isAuthenticated && user) {
+      const createBill = async () => {
+        try {
+          // Tạo đối tượng Bill từ cart items
+          const bill: Bill = {
+            Cart: items.map(item => ({
+              idCart: Date.now(),
+              idCategory: 1, // Cần xác định category ID
+              idPartner: '0', // Cần xác định partner ID
+              idProduct: parseInt(item.book.id),
+              imgProduct: item.book.coverImage,
+              nameProduct: item.book.title,
+              numberProduct: item.quantity,
+              priceProduct: item.book.price,
+              totalPrice: item.book.price * item.quantity,
+              userClient: user.phoneNumber
+            })),
+            dayOut: new Date().toISOString().split('T')[0],
+            idBill: Date.now(),
+            idClient: user.id,
+            idPartner: '0', // Cần xác định partner ID
+            status: 'Yes',
+            timeOut: new Date().toTimeString().split(' ')[0],
+            total: totalPrice
+          };
+          
+          // Gọi API để tạo bill
+          await axios.post<BillResponse>(`${import.meta.env.VITE_API_URL}/bills/addBill`, bill);
+          
+          // Xóa giỏ hàng sau khi tạo bill thành công
+          clearCart();
+        } catch (error) {
+          console.error('Failed to create bill:', error);
+        }
+      };
+      
+      createBill();
+    } else {
+      clearCart(); // Vẫn xóa giỏ hàng nếu không đăng nhập
+    }
+    
+    onClose(); // Đóng dialog
+  };  
   const handlePaymentFailure = (message: string) => {
     setIsProcessing(false);
     alert(`Payment failed: ${message}`);

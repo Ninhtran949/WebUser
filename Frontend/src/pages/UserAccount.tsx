@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useFavorites } from '../contexts/FavoriteContext';
+import { useCart } from '../contexts/CartContext';
 import { UserIcon, ShoppingBagIcon, HeartIcon, CreditCardIcon, MapPinIcon, ChevronRightIcon, LogOutIcon, BellIcon } from 'lucide-react';
 import type { Cart, OrderHistory, TransformedBill } from '../types/bill';
 
@@ -72,7 +73,6 @@ const UserAccount = () => {
 
     fetchOrders();
   }, [user?.phoneNumber]);
-
   const tabs = [
     {
       id: 'profile',
@@ -521,6 +521,28 @@ const OrderHistory = ({
 
 // Saved Items Component
 const SavedItems = ({ items }: { items: any[] }) => {
+  const { addItem } = useCart();
+  const { removeFromFavorites } = useFavorites();
+  const { user } = useAuth();
+
+  const handleAddToCart = (book: any) => {
+    addItem({
+      id: book.id,
+      _id: book.id, // Add missing _id property
+      title: book.title,
+      author: book.author,
+      price: book.price,
+      coverImage: book.coverImage,
+      category: book.category || 'Uncategorized' // Add missing category property
+    });
+  };
+
+  const handleRemoveFromFavorites = (bookId: string) => {
+    if (user?.id) {
+      removeFromFavorites(bookId);
+    }
+  };
+
   return (
     <div>
       <div className="border-b border-gray-200 pb-4 mb-6">
@@ -549,9 +571,20 @@ const SavedItems = ({ items }: { items: any[] }) => {
               <p className="text-sm text-gray-600 mt-1">{item.author}</p>
               <div className="flex items-center justify-between mt-2">
                 <span className="font-bold">${item.price.toFixed(2)}</span>
-                <button className="text-blue-600 text-sm hover:underline">
-                  Add to Cart
-                </button>
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={() => handleRemoveFromFavorites(item.id)}
+                    className="text-red-500 text-sm hover:underline"
+                  >
+                    Remove
+                  </button>
+                  <button 
+                    onClick={() => handleAddToCart(item)}
+                    className="text-blue-600 text-sm hover:underline"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -560,7 +593,6 @@ const SavedItems = ({ items }: { items: any[] }) => {
     </div>
   );
 };
-
 // Payment Methods Component
 const PaymentMethods = () => {
   return (

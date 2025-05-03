@@ -72,30 +72,70 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     checkAuth();
   }, []);
 
-  const login = async (phoneNumber: string, password: string) => {
-    try {
-      const response = await axios.post<LoginResponse>(`${API_URL}/user/login`, {
-        username: phoneNumber, // backend expects username as phoneNumber
-        password,
-      });
+      const login = async (phoneNumber: string, password: string) => {
+        try {
+          const response = await axios.post<LoginResponse>(`${API_URL}/user/login`, {
+            username: phoneNumber,
+            password,
+          });
 
-      const { accessToken, user: userData } = response.data;
+          const { accessToken, user: userData } = response.data;
       
-      // Store token
-      localStorage.setItem('accessToken', accessToken);
+          // Store token
+          localStorage.setItem('accessToken', accessToken);
       
-      // Set user state
-      setUser(userData);
+          // Set user state
+          setUser(userData);
       
-      // Set axios default header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+          // Set axios default header
+          axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
       
-    } catch (error) {
-      console.error('Login error:', error);
-      throw new Error('Invalid credentials');
-    }
-  };
-
+          // Đồng bộ giỏ hàng từ localStorage lên MongoDB nếu có
+          const localCart = localStorage.getItem('cart');
+          if (localCart) {
+            const cartItems = JSON.parse(localCart);
+            for (const item of cartItems) {
+              try {
+                await axios.post(`${API_URL}/cart`, {
+                  idProduct: parseInt(item.book.id),
+                  idCart: Date.now(),
+                  idCategory: 1,
+                  imgProduct: item.book.coverImage,
+                  idPartner: '0',
+                  nameProduct: item.book.title,
+                  userClient: userData.phoneNumber,
+                  priceProduct: item.book.price,
+                  numberProduct: item.quantity,
+                  totalPrice: item.book.price * item.quantity
+                });
+              } catch (error) {
+                console.error('Failed to sync cart item:', error);
+              }
+            }
+          }
+      
+          // Đồng bộ favorites từ localStorage lên MongoDB nếu có
+          const localFavorites = localStorage.getItem('favorites');
+          if (localFavorites) {
+            const favoriteItems = JSON.parse(localFavorites);
+            for (const item of favoriteItems) {
+              try {
+                await axios.post(`${API_URL}/favorites`, {
+                  userId: userData.id,
+                  bookId: item.id,
+                  title: item.title,
+                });
+              } catch (error) {
+                console.error('Failed to sync favorite item:', error);
+              }
+            }
+          }
+      
+        } catch (error) {
+          console.error('Login error:', error);
+          throw new Error('Invalid credentials');
+        }
+      };
   // Thêm interface cho response signup
   interface SignupResponse {
     id: string;

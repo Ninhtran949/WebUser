@@ -68,6 +68,8 @@ app.use('/cart', cartRouter);
 const booksRouter = require('./routes/books');
 app.use('/books', booksRouter);
 
+const favoritesRouter = require('./routes/favorites');
+app.use('/favorites', favoritesRouter);
 
 const paymentZaloRouter = require('./services/paymentzalo');
 app.use('/zalopay', paymentZaloRouter);        // Import và sử dụng các endpoint từ paymentzalo.js
