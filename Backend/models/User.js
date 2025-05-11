@@ -24,9 +24,8 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
-    set: encrypt,
-    get: decrypt
+    required: true
+    // Removed encrypt/decrypt for password since it's handled by bcrypt
   },
   phoneNumber: {
     type: String,

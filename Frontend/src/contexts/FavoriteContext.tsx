@@ -1,14 +1,14 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { Book } from '../data/books';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import * as favoriteService from '../services/favoriteService';
+import { Book } from '../types/book';
 
 interface FavoriteContextType {
   favorites: Book[];
   addToFavorites: (book: Book) => void;
   removeFromFavorites: (bookId: string) => void;
-  clearFavorites: () => void;
   isFavorite: (bookId: string) => boolean;
-  favoriteCount: number;
+  clearFavorites: () => void;
 }
 
 const FavoriteContext = createContext<FavoriteContextType | undefined>(undefined);
@@ -21,77 +21,86 @@ export const useFavorites = () => {
   return context;
 };
 
-export const FavoriteProvider = ({ children }: { children: React.ReactNode }) => {
+export const FavoriteProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [favorites, setFavorites] = useState<Book[]>([]);
-  const { isAuthenticated, user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // Load favorites from localStorage when component mounts
-    if (isAuthenticated && user) {
-      const savedFavorites = localStorage.getItem(`favorites-${user.id}`);
-      if (savedFavorites) {
+    const loadFavorites = async () => {
+      if (isAuthenticated && user?.id) {
         try {
+          const userFavorites = await favoriteService.getUserFavorites(user.id);
+          setFavorites(userFavorites);
+        } catch (error) {
+          console.error('Failed to load favorites:', error);
+        }
+      } else {
+        const savedFavorites = localStorage.getItem('favorites');
+        if (savedFavorites) {
           setFavorites(JSON.parse(savedFavorites));
-        } catch (e) {
-          console.error('Failed to parse saved favorites', e);
         }
       }
-    } else {
-      const savedFavorites = localStorage.getItem('favorites-guest');
-      if (savedFavorites) {
-        try {
-          setFavorites(JSON.parse(savedFavorites));
-        } catch (e) {
-          console.error('Failed to parse saved favorites', e);
-        }
-      }
-    }
+    };
+
+    loadFavorites();
   }, [isAuthenticated, user]);
 
   useEffect(() => {
-    // Save favorites to localStorage whenever it changes
-    if (isAuthenticated && user) {
-      localStorage.setItem(`favorites-${user.id}`, JSON.stringify(favorites));
-    } else {
-      localStorage.setItem('favorites-guest', JSON.stringify(favorites));
+    if (!isAuthenticated) {
+      localStorage.setItem('favorites', JSON.stringify(favorites));
     }
-  }, [favorites, isAuthenticated, user]);
+  }, [favorites, isAuthenticated]);
 
-  const addToFavorites = (book: Book) => {
-    setFavorites(prevFavorites => {
-      if (!prevFavorites.some(fav => fav.id === book.id)) {
-        return [...prevFavorites, book];
+  const addToFavorites = async (book: Book) => {
+    if (!isFavorite(book.id)) {
+      setFavorites([...favorites, book]);
+      
+      if (isAuthenticated && user?.id) {
+        try {
+          await favoriteService.addToFavorites(user.id, book);
+        } catch (error) {
+          console.error('Failed to add to favorites:', error);
+        }
       }
-      return prevFavorites;
-    });
+    }
   };
 
-  const removeFromFavorites = (bookId: string) => {
-    setFavorites(prevFavorites => 
-      prevFavorites.filter(book => book.id !== bookId)
-    );
-  };
-
-  const clearFavorites = () => {
-    setFavorites([]);
+  const removeFromFavorites = async (bookId: string) => {
+    setFavorites(favorites.filter(book => book.id !== bookId));
+    
+    if (isAuthenticated && user?.id) {
+      try {
+        await favoriteService.removeFromFavorites(user.id, bookId);
+      } catch (error) {
+        console.error('Failed to remove from favorites:', error);
+      }
+    }
   };
 
   const isFavorite = (bookId: string) => {
     return favorites.some(book => book.id === bookId);
   };
 
-  const value = {
-    favorites,
-    addToFavorites,
-    removeFromFavorites,
-    clearFavorites,
-    isFavorite,
-    favoriteCount: favorites.length
+  const clearFavorites = async () => {
+    setFavorites([]);
+    
+    if (isAuthenticated && user?.id) {
+      try {
+        await favoriteService.clearFavorites(user.id);
+      } catch (error) {
+        console.error('Failed to clear favorites:', error);
+      }
+    }
   };
 
   return (
-    <FavoriteContext.Provider value={value}>
+    <FavoriteContext.Provider value={{ 
+      favorites, 
+      addToFavorites, 
+      removeFromFavorites, 
+      isFavorite,
+      clearFavorites
+    }}>
       {children}
     </FavoriteContext.Provider>
-  );
-};
+  );};

@@ -50,7 +50,7 @@ router.get('/phone/:phoneNumber', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    console.log('Login attempt:', { username });
+    console.log('Login attempt:', { username, password });
 
     const user = await User.findOne({ phoneNumber: username });
     if (!user) {
@@ -58,7 +58,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'User not found' });
     }
     
-    console.log('Found user:', { userId: user._id, phone: user.phoneNumber });
+    console.log('Found user:', { userId: user._id, phone: user.phoneNumber, hashedPassword: user.password });
     
     const isMatch = await bcrypt.compare(password, user.password);
     console.log('Password comparison result:', isMatch);
