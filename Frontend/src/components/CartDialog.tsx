@@ -1,9 +1,41 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { XIcon, TrashIcon, PlusIcon, MinusIcon } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import SignInDialog from './SignInDialog';
+import OrderConfirmDialog from './OrderConfirmDialog';
 import { createPayment, checkPaymentStatus } from '../services/paymentService';
+import axios from 'axios';
+
+// Add interfaces for API responses
+interface BillResponse {
+  message: string;
+  billId: string;
+}
+
+interface BillItem {
+  idCart: number;
+  idCategory: number;
+  idPartner: string;
+  idProduct: number;
+  imgProduct: string;
+  nameProduct: string;
+  numberProduct: number;
+  priceProduct: number;
+  totalPrice: number;
+  userClient: string;
+}
+
+interface Bill {
+  Cart: BillItem[];
+  dayOut: string;
+  idBill: number;
+  idClient: string;
+  idPartner: string;
+  status: string;
+  timeOut: string;
+  total: number;
+}
 
 interface CartDialogProps {
   isOpen: boolean;
@@ -14,19 +46,22 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
   const { items, removeItem, clearCart, itemCount, increaseQuantity, decreaseQuantity } = useCart();
   const { isAuthenticated, user } = useAuth();
   const [isSignInDialogOpen, setIsSignInDialogOpen] = useState(false);
+  const [isOrderConfirmOpen, setIsOrderConfirmOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentTransId, setPaymentTransId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const totalPrice = items.reduce((total, item) => total + item.book.price * item.quantity, 0);
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!isAuthenticated) {
       setIsSignInDialogOpen(true);
       return;
     }
-    
+    setIsOrderConfirmOpen(true);
+  };
+
+  const handleConfirmOrder = async () => {
     try {
       setIsProcessing(true);
       
@@ -44,7 +79,6 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
       });
       
       if (response && response.order_url) {
-        setPaymentTransId(response.app_trans_id);
         window.open(response.order_url, '_blank');
         console.log('Payment created with transaction ID:', response.app_trans_id);
         startPollingPaymentStatus(response.app_trans_id);
@@ -109,10 +143,51 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
   const handlePaymentSuccess = () => {
     setIsProcessing(false);
     alert('Payment successful! Your order has been placed.');
-    clearCart(); // Clear the cart after successful payment
-    onClose(); // Close the cart dialog
-  };
-  
+    
+    // Tạo bill từ cart items
+    if (isAuthenticated && user) {
+      const createBill = async () => {
+        try {
+          // Tạo đối tượng Bill từ cart items
+          const bill: Bill = {
+            Cart: items.map(item => ({
+              idCart: Date.now(),
+              idCategory: 1, // Cần xác định category ID
+              idPartner: '0', // Cần xác định partner ID
+              idProduct: parseInt(item.book.id),
+              imgProduct: item.book.coverImage,
+              nameProduct: item.book.title,
+              numberProduct: item.quantity,
+              priceProduct: item.book.price,
+              totalPrice: item.book.price * item.quantity,
+              userClient: user.phoneNumber
+            })),
+            dayOut: new Date().toISOString().split('T')[0],
+            idBill: Date.now(),
+            idClient: user.id,
+            idPartner: '0', // Cần xác định partner ID
+            status: 'Yes',
+            timeOut: new Date().toTimeString().split(' ')[0],
+            total: totalPrice
+          };
+          
+          // Gọi API để tạo bill
+          await axios.post<BillResponse>(`${import.meta.env.VITE_API_URL}/bills/addBill`, bill);
+          
+          // Xóa giỏ hàng sau khi tạo bill thành công
+          clearCart();
+        } catch (error) {
+          console.error('Failed to create bill:', error);
+        }
+      };
+      
+      createBill();
+    } else {
+      clearCart(); // Vẫn xóa giỏ hàng nếu không đăng nhập
+    }
+    
+    onClose(); // Đóng dialog
+  };  
   const handlePaymentFailure = (message: string) => {
     setIsProcessing(false);
     alert(`Payment failed: ${message}`);
@@ -131,7 +206,23 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
           {items.length === 0 ? (
             <div className="text-center py-8">
               <div className="flex justify-center mb-4">
-                <img src="Pic for emty cart" alt="Empty cart pic" className="w-32 h-32 opacity-60" />
+                {/* Thay thế hình ảnh bằng SVG icon */}
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="w-32 h-32 text-gray-300" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor" 
+                  strokeWidth={1}
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" 
+                  />
+                  <circle cx="9" cy="19" r="1" />
+                  <circle cx="15" cy="19" r="1" />
+                </svg>
               </div>
               <p className="text-gray-500 mb-4">Your cart is empty</p>
               <button onClick={onClose} className="bg-blue-800 text-white px-6 py-2 rounded hover:bg-blue-900 transition">
@@ -208,7 +299,7 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
                   {isProcessing 
                     ? 'Processing...' 
                     : isAuthenticated 
-                      ? 'Pay with ZaloPay' 
+                      ? 'Proceed to Checkout' 
                       : 'Sign In to Checkout'}
                 </button>
               </div>
@@ -218,6 +309,11 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
       </div>
     </div>
     <SignInDialog isOpen={isSignInDialogOpen} onClose={() => setIsSignInDialogOpen(false)} />
+    <OrderConfirmDialog 
+      isOpen={isOrderConfirmOpen} 
+      onClose={() => setIsOrderConfirmOpen(false)} 
+      onConfirm={handleConfirmOrder}
+    />
   </>;
 };
 

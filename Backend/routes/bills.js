@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Bill = require('../models/Bill');
+const authenticateToken = require('../middlewares/authenticateToken');
 
 // Nhận io như tham số
 module.exports = (io) => {
@@ -158,21 +159,31 @@ router.get('/idPartner/:idPartner', async (req, res) => {
   });
 
 // Lấy tất cả Cart theo userClient
-router.get('/cart/user/:userClient', async (req, res) => {
+router.get('/cart/user/:userClient', authenticateToken, async (req, res) => {
   try {
     const bills = await Bill.find({
       'Cart.userClient': req.params.userClient // Lọc theo userClient trong Cart
     });
 
     // Tạo mảng chứa các Cart với userClient khớp
-    const userCarts = bills.flatMap(bill => bill.Cart.filter(cart => cart.userClient === req.params.userClient));
+    const userCarts = bills.flatMap(bill => 
+      bill.Cart.filter(cart => cart.userClient === req.params.userClient)
+    );
     
     if (userCarts.length === 0) {
       return res.status(404).json({ message: 'No carts found for this userClient' });
     }
 
+    // Sắp xếp theo thứ tự thời gian giảm dần
+    userCarts.sort((a, b) => {
+      const billA = bills.find(bill => bill.Cart.includes(a));
+      const billB = bills.find(bill => bill.Cart.includes(b));
+      return new Date(billB?.dayOut || 0).getTime() - new Date(billA?.dayOut || 0).getTime();
+    });
+
     res.status(200).json(userCarts);
   } catch (err) {
+    console.error('Error fetching user carts:', err);
     res.status(500).json({ message: err.message });
   }
 });

@@ -50,14 +50,21 @@ router.get('/phone/:phoneNumber', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
+    console.log('Login attempt:', { username, password });
 
     const user = await User.findOne({ phoneNumber: username });
     if (!user) {
+      console.log('User not found with phone:', username);
       return res.status(400).json({ message: 'User not found' });
     }
-
+    
+    console.log('Found user:', { userId: user._id, phone: user.phoneNumber, hashedPassword: user.password });
+    
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password comparison result:', isMatch);
+    
     if (!isMatch) {
+      console.log('Invalid password for user:', username);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
@@ -153,11 +160,35 @@ router.post('/token', async (req, res) => {
 // tạo user
 router.post('/signup', async (req, res) => {
   try {
-    console.log('Request Body:', req.body); // Log dữ liệu nhận từ client
+    console.log('Request Body:', req.body);
+
+    // Validate phone number
+    const phoneRegex = /^(0|84|\+84)[3|5|7|8|9][0-9]{8}$/;
+    if (!phoneRegex.test(req.body.phoneNumber)) {
+      return res.status(400).json({ 
+        message: 'Invalid phone number format. Please enter a valid Vietnamese phone number.' 
+      });
+    }
+
+    // Validate password
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{6,}$/;
+    if (!passwordRegex.test(req.body.password)) {
+      return res.status(400).json({ 
+        message: 'Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.' 
+      });
+    }
+    
+    // Kiểm tra số điện thoại đã tồn tại chưa
+    const existingUser = await User.findOne({ phoneNumber: req.body.phoneNumber });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Phone number already exists' });
+    }
+
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    
     const user = new User({
       address: req.body.address,
-      id: req.body.id,
+      id: req.body.phoneNumber, // Sử dụng phoneNumber làm id
       name: req.body.name,
       password: hashedPassword,
       phoneNumber: req.body.phoneNumber,
@@ -175,14 +206,22 @@ router.post('/signup', async (req, res) => {
 // Thay đổi mật khẩu người dùng
 router.patch('/change-password/:id', async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  const userId = req.params.id;
+  const phoneNumber = req.params.id;
 
   try {
-    const user = await User.findOne({ id: userId });
+    const user = await User.findOne({ phoneNumber: phoneNumber });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Old password is incorrect' });
+
+    // Validate mật khẩu mới
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{6,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({ 
+        message: 'New password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.' 
+      });
+    }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedNewPassword;
@@ -198,19 +237,30 @@ router.patch('/change-password/:id', async (req, res) => {
 // UPDATE a User by ID
 router.patch('/id/:id', async (req, res) => {
   try {
-    const id = req.params.id;
-    const user = await User.findOne({ id: id });
+    const phoneNumber = req.params.id;
+    // Tìm user bằng phoneNumber
+    const user = await User.findOne({ phoneNumber: phoneNumber });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    // Cập nhật các trường nếu được cung cấp
     if (req.body.address !== undefined) user.address = req.body.address;
     if (req.body.name !== undefined) user.name = req.body.name;
-    if (req.body.password !== undefined) user.password = req.body.password;
-    if (req.body.phoneNumber !== undefined) user.phoneNumber = req.body.phoneNumber;
+    if (req.body.phoneNumber !== undefined) {
+      // Kiểm tra xem số điện thoại mới đã tồn tại chưa
+      if (req.body.phoneNumber !== phoneNumber) {
+        const existingUser = await User.findOne({ phoneNumber: req.body.phoneNumber });
+        if (existingUser) {
+          return res.status(400).json({ message: 'Phone number already exists' });
+        }
+      }
+      user.phoneNumber = req.body.phoneNumber;
+    }
     if (req.body.strUriAvatar !== undefined) user.strUriAvatar = req.body.strUriAvatar;
 
     const updatedUser = await user.save();
     res.json(updatedUser);
   } catch (err) {
+    console.error('Error updating user:', err);
     res.status(400).json({ message: err.message });
   }
 });

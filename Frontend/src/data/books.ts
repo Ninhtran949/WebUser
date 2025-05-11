@@ -24,6 +24,7 @@ export interface APIBook {
     priceProduct: string;
     userPartner: string;
   };
+  title?: string;  // Thêm title optional
   author: string;
   isbn13: string;
   publisher: string;

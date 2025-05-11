@@ -19,9 +19,9 @@ const RelatedBooks = ({
   const transformAPIBook = (book: APIBook): Book => ({
     _id: book._id,
     id: book._id,
-    title: book.productId?.nameProduct || 'Untitled',
-    author: book.author,
-    price: Number(book.productId?.priceProduct) || 0,
+    title: book.productId?.nameProduct || book.title || 'Untitled',
+    author: book.productId?.userPartner || book.author || 'Unknown',
+    price: parseFloat(book.productId?.priceProduct || '0'),
     coverImage: book.productId?.imgProduct || '',
     category: book.category || 'Uncategorized',
     productId: book.productId || null,
