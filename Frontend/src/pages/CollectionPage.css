@@ -1,0 +1,41 @@
+/* Masonry grid styles */
+.my-masonry-grid {
+  display: flex;
+  width: auto;
+  gap: 1.5rem;
+}
+
+.my-masonry-grid_column {
+  padding-left: 0 !important;
+  background-clip: padding-box;
+}
+
+/* Book card animation */
+.book-card {
+  transition: all 0.3s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .my-masonry-grid {
+    gap: 1rem;
+  }
+}
