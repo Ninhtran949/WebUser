@@ -40,9 +40,9 @@ function isErrorWithResponse(error: unknown): error is ApiError {
   return error !== null && typeof error === 'object' && 'response' in error;
 }
 
-export async function getUserCart(userId: string): Promise<CartItem[]> {
+export async function getUserCart(phoneNumber: string): Promise<CartItem[]> {
   try {
-    const response = await axios.get(`${API_URL}/cart/user/${userId}`);
+    const response = await axios.get(`${API_URL}/cart/user/${phoneNumber}`);
     const items = response.data;
     
     if (!isCartResponseArray(items)) {
@@ -52,116 +52,70 @@ export async function getUserCart(userId: string): Promise<CartItem[]> {
 
     return items.map(item => ({
       book: {
-        id: String(item.idProduct),
-        _id: String(item.idProduct),
+        id: item.idProduct,
+        _id: item.idProduct,
         title: item.nameProduct,
         author: item.idPartner,
         price: item.priceProduct,
         coverImage: item.imgProduct,
-        category: String(item.idCategory)
+        category: item.idCategory,
       },
-      quantity: item.numberProduct
+      quantity: item.numberProduct,
+      cartId: item.idCart
     }));
   } catch (error) {
-    if (isErrorWithResponse(error) && error.response?.status === 404) {
-      return [];
-    }
-    throw new Error('Failed to fetch cart');
+    console.error('Error fetching cart:', error);
+    return [];
   }
 }
 
-export const addToCart = async (userId: string, cartItem: CartItem): Promise<void> => {
+export const addToCart = async (phoneNumber: string, cartItem: CartItem): Promise<void> => {
   try {
-    if (!userId) throw new Error('User ID is required');
+    if (!phoneNumber) throw new Error('Phone number is required');
     if (!cartItem.book) throw new Error('Book information is required');
 
     // Get maximum cart ID with error handling
-    let maxIdCart = 0;
-    try {
-      const cartsResponse = await axios.get<CartItemResponse[]>(`${API_URL}/cart/user/${userId}`);
-      if (cartsResponse.data && cartsResponse.data.length > 0) {
-        maxIdCart = Math.max(...cartsResponse.data.map(cart => cart.idCart));
-      }
-    } catch (error) {
-      console.warn('Failed to get max cart ID, using default value');
-      maxIdCart = 0;
-    }
+    let idCart = new Date().getTime().toString();
     
-    const newIdCart = maxIdCart + 1;
-
-    // Enhanced idProduct handling with validation
-    let idProduct: number;
-    if (cartItem.book._id) {
-      const parsedId = Number(cartItem.book._id);
-      if (!isNaN(parsedId)) {
-        idProduct = parsedId;
-      } else if (cartItem.book.id) {
-        const parsedAltId = Number(cartItem.book.id);
-        if (!isNaN(parsedAltId)) {
-          idProduct = parsedAltId;
-        } else {
-          idProduct = Date.now();
-          console.warn('Using timestamp as fallback for invalid ID');
-        }
-      } else {
-        idProduct = Date.now();
-        console.warn('Using timestamp as fallback for missing ID');
-      }
-    } else if (cartItem.book.id) {
-      const parsedId = Number(cartItem.book.id);
-      idProduct = !isNaN(parsedId) ? parsedId : Date.now();
-    } else {
-      idProduct = Date.now();
-      console.warn('Using timestamp as fallback for missing ID');
+    // Use book._id if available, otherwise use book.id
+    const idProduct = cartItem.book._id || cartItem.book.id;
+    if (!idProduct) {
+      throw new Error('Invalid product ID');
     }
 
-    // Validate and ensure category is a number
-    let idCategory = 1;
-    if (cartItem.book.category) {
-      const parsedCategory = parseInt(cartItem.book.category);
-      if (!isNaN(parsedCategory)) {
-        idCategory = parsedCategory;
-      }
-    }
-
-    // Create payload with type validation
     const payload = {
       idProduct,
-      idCart: newIdCart,
-      idCategory,
+      idCart,
+      idCategory: cartItem.book.category || '1',
       imgProduct: cartItem.book.coverImage || '',
       idPartner: cartItem.book.author || '',
-      nameProduct: cartItem.book.title || 'Unnamed Product',
-      userClient: userId,
+      nameProduct: cartItem.book.title || '',
+      userClient: phoneNumber,
       priceProduct: Number(cartItem.book.price) || 0,
       numberProduct: cartItem.quantity || 1,
       totalPrice: (Number(cartItem.book.price) || 0) * (cartItem.quantity || 1)
     };
 
-    // Validate payload before sending
-    if (!payload.idProduct) throw new Error('Invalid product ID');
-    if (!payload.nameProduct) throw new Error('Product name is required');
-    if (payload.priceProduct < 0) throw new Error('Invalid product price');
-    if (payload.numberProduct < 1) throw new Error('Invalid product quantity');
-
-    const response = await axios.post(`${API_URL}/cart`, payload);
-    if (!response.data) throw new Error('Failed to add item to cart');
-
+    await axios.post(`${API_URL}/cart`, payload);
   } catch (error) {
-    if (isErrorWithResponse(error)) {
-      throw new Error(error.response?.data?.message || 'Failed to add item to cart');
-    }
-    throw error;
+    console.error('Error adding to cart:', error);
+    throw new Error(isErrorWithResponse(error) 
+      ? error.response?.data?.message || 'Failed to add to cart'
+      : 'Failed to add to cart');
   }
 };
 
-export async function updateCartItem(userId: string, bookId: string, quantity: number): Promise<void> {
+export async function updateCartItem(phoneNumber: string, bookId: string, quantity: number): Promise<void> {
   try {
-    const response = await axios.get(`${API_URL}/cart/user/${userId}`);
+    if (!phoneNumber) throw new Error('Phone number is required');
+    if (!bookId) throw new Error('Book ID is required');
+    if (quantity < 1) throw new Error('Quantity must be at least 1');
+
+    const response = await axios.get(`${API_URL}/cart/user/${phoneNumber}`);
     const items = response.data;
 
     if (!isCartResponseArray(items)) {
-      throw new Error('Invalid server response');
+      throw new Error('Invalid cart data received');
     }
 
     const cartItem = items.find(item => String(item.idProduct) === bookId);
@@ -174,20 +128,23 @@ export async function updateCartItem(userId: string, bookId: string, quantity: n
       totalPrice: cartItem.priceProduct * quantity
     });
   } catch (error) {
-    if (isErrorWithResponse(error)) {
-      throw new Error(error.response?.data?.message || 'Failed to update cart item');
-    }
-    throw error;
+    console.error('Error updating cart:', error);
+    throw new Error(isErrorWithResponse(error)
+      ? error.response?.data?.message || 'Failed to update cart'
+      : 'Failed to update cart');
   }
 }
 
-export async function removeFromCart(userId: string, bookId: string): Promise<void> {
+export async function removeFromCart(phoneNumber: string, bookId: string): Promise<void> {
   try {
-    const response = await axios.get(`${API_URL}/cart/user/${userId}`);
+    if (!phoneNumber) throw new Error('Phone number is required');
+    if (!bookId) throw new Error('Book ID is required');
+
+    const response = await axios.get(`${API_URL}/cart/user/${phoneNumber}`);
     const items = response.data;
 
     if (!isCartResponseArray(items)) {
-      throw new Error('Invalid server response');
+      throw new Error('Invalid cart data received');
     }
 
     const cartItem = items.find(item => String(item.idProduct) === bookId);
@@ -195,34 +152,23 @@ export async function removeFromCart(userId: string, bookId: string): Promise<vo
       throw new Error('Cart item not found');
     }
 
-    const deleteResponse = await axios.delete(`${API_URL}/cart/${cartItem.idCart}`);
-    if (deleteResponse.status !== 200) {
-      throw new Error('Failed to remove item');
-    }
+    await axios.delete(`${API_URL}/cart/${cartItem.idCart}`);
   } catch (error) {
-    if (isErrorWithResponse(error)) {
-      throw new Error(error.response?.data?.message || 'Failed to remove cart item');
-    }
-    throw error;
+    console.error('Error removing from cart:', error);
+    throw new Error(isErrorWithResponse(error)
+      ? error.response?.data?.message || 'Failed to remove from cart'
+      : 'Failed to remove from cart');
   }
 }
 
-export async function clearCart(userId: string): Promise<void> {
+export async function clearCart(phoneNumber: string): Promise<void> {
   try {
-    const response = await axios.get(`${API_URL}/cart/user/${userId}`);
-    const items = response.data;
-
-    if (!isCartResponseArray(items)) {
-      return;
-    }
-
-    await Promise.all(items.map(item => 
-      axios.delete(`${API_URL}/cart/${item.idCart}`)
-    ));
+    if (!phoneNumber) throw new Error('Phone number is required');
+    await axios.delete(`${API_URL}/cart/user/${phoneNumber}`);
   } catch (error) {
-    if (isErrorWithResponse(error)) {
-      throw new Error(error.response?.data?.message || 'Failed to clear cart');
-    }
-    throw error;
+    console.error('Error clearing cart:', error);
+    throw new Error(isErrorWithResponse(error)
+      ? error.response?.data?.message || 'Failed to clear cart'
+      : 'Failed to clear cart');
   }
 }

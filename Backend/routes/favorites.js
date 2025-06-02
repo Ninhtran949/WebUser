@@ -3,13 +3,11 @@ const router = express.Router();
 const Favorite = require('../models/Favorite');
 
 // Lấy favorites của user
-router.get('/user/:userId', async (req, res) => {
+router.get('/user/:phoneNumber', async (req, res) => {
   try {
-    const favorites = await Favorite.find({ userId: req.params.userId });
-    if (favorites.length === 0) {
-      return res.status(404).json({ message: 'No favorites found for this user' });
-    }
-    res.status(200).json(favorites);
+    const favorites = await Favorite.find({ userId: req.params.phoneNumber });
+    // Luôn trả về mảng, ngay cả khi rỗng
+    res.status(200).json(favorites || []);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -17,8 +15,16 @@ router.get('/user/:userId', async (req, res) => {
 
 // Thêm sách vào favorites
 router.post('/', async (req, res) => {
+  // Validate required fields
+  if (!req.body.phoneNumber) {
+    return res.status(400).json({ message: 'User phone number is required' });
+  }
+  if (!req.body.bookId) {
+    return res.status(400).json({ message: 'Book ID is required' });
+  }
+
   const favorite = new Favorite({
-    userId: req.body.userId,
+    userId: req.body.phoneNumber, // Sử dụng phoneNumber làm userId
     bookId: req.body.bookId,
     title: req.body.title,
     author: req.body.author,
@@ -40,10 +46,10 @@ router.post('/', async (req, res) => {
 });
 
 // Xóa một sách khỏi favorites
-router.delete('/:userId/:bookId', async (req, res) => {
+router.delete('/:phoneNumber/:bookId', async (req, res) => {
   try {
     const favorite = await Favorite.findOneAndDelete({
-      userId: req.params.userId,
+      userId: req.params.phoneNumber,
       bookId: req.params.bookId
     });
 
@@ -57,9 +63,9 @@ router.delete('/:userId/:bookId', async (req, res) => {
 });
 
 // Xóa tất cả favorites của một user
-router.delete('/user/:userId', async (req, res) => {
+router.delete('/user/:phoneNumber', async (req, res) => {
   try {
-    const result = await Favorite.deleteMany({ userId: req.params.userId });
+    const result = await Favorite.deleteMany({ userId: req.params.phoneNumber });
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: 'No favorites found for this user' });
     }

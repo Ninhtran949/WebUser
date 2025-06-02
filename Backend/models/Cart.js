@@ -2,14 +2,18 @@ const mongoose = require('mongoose');
 
 const cartSchema = new mongoose.Schema({
   idProduct: { 
-    type: Number, 
-    required: true 
-  },  idCart: { 
-    type: Number,
-    required: true
+    type: String, // Changed to String to match MongoDB _id
+    required: true,
+    ref: 'Product' // Reference to Product model
+  },
+  idCart: { 
+    type: String,
+    required: true,
+    unique: true,
+    default: () => new mongoose.Types.ObjectId().toString()
   },
   idCategory: { 
-    type: Number, 
+    type: String, 
     required: true 
   },
   imgProduct: { 
@@ -25,7 +29,7 @@ const cartSchema = new mongoose.Schema({
     required: true
   },
   userClient: { 
-    type: String,
+    type: String, // This will store phoneNumber
     required: true,
     index: true
   },
@@ -46,6 +50,17 @@ const cartSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true
+});
+
+// Compound index for userClient and idProduct to ensure unique products per user
+cartSchema.index({ userClient: 1, idProduct: 1 }, { unique: true });
+
+// Pre-save middleware to calculate totalPrice
+cartSchema.pre('save', function(next) {
+  if (this.isModified('numberProduct') || this.isModified('priceProduct')) {
+    this.totalPrice = this.numberProduct * this.priceProduct;
+  }
+  next();
 });
 
 module.exports = mongoose.model('Cart', cartSchema);
