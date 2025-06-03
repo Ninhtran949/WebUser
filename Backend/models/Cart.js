@@ -2,19 +2,17 @@ const mongoose = require('mongoose');
 
 const cartSchema = new mongoose.Schema({
   idProduct: { 
-    type: String, // Changed to String to match MongoDB _id
-    required: true,
-    ref: 'Product' // Reference to Product model
+    type: String,
+    required: true
   },
-  idCart: { 
+  idCart: {
     type: String,
     required: true,
-    unique: true,
-    default: () => new mongoose.Types.ObjectId().toString()
+    unique: true
   },
-  idCategory: { 
-    type: String, 
-    required: true 
+  idCategory: {
+    type: String,
+    required: true
   },
   imgProduct: { 
     type: String,

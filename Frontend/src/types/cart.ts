@@ -1,9 +1,10 @@
 import { Book } from './book';
 
 export interface CartItemResponse {
-  idProduct: number;
-  idCart: number;
-  idCategory: number;
+  _id: string;
+  idProduct: string;        // Sửa thành string
+  idCart: string;          // Sửa thành string
+  idCategory: string;      // Sửa thành string vì MongoDB lưu "1"
   imgProduct: string;
   idPartner: string;
   nameProduct: string;
@@ -11,7 +12,10 @@ export interface CartItemResponse {
   priceProduct: number;
   numberProduct: number;
   totalPrice: number;
+  __v?: number;           // Thêm version key của MongoDB
 }
+
+
 
 export interface CartItem {
   book: Book;
