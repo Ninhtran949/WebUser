@@ -117,64 +117,30 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
 
-      // Validate book data
-      if (!book.id && !book._id) {
+      if (!book.productId) {
         toast.error('Invalid book data');
         return;
       }
 
-      // Check for mixed vendors
-      const existingPartnerItem = items.find(item =>
-        item.book.author && book.author && item.book.author !== book.author
-      );
+      const newItem: CartItem = { book, quantity };
 
-      if (existingPartnerItem) {
-        toast.error('Cannot add items from different vendors');
-        return;
-      }
-
-      const existingItem = items.find(item => item.book.id === book.id);
-      
-      if (existingItem) {
-        // Update existing item
-        const newQuantity = existingItem.quantity + quantity;
-        const updatedItems = items.map(item =>
-          item.book.id === book.id
-            ? { ...item, quantity: newQuantity }
-            : item
-        );
-
-        if (isAuthenticated && user?.phoneNumber) {
-          try {
-            await cartService.updateCartItem(user.phoneNumber, book.id, newQuantity);
-            setItems(updatedItems);
-            toast.success('Cart updated successfully');
-          } catch (error) {
-            console.error('Failed to update cart:', error);
-            toast.error('Failed to update cart');
-          }
-        } else {
-          setItems(updatedItems);
-          toast.success('Cart updated successfully');
+      if (isAuthenticated && user?.phoneNumber) {
+        try {
+          // Thêm vào server và nhận response
+          await cartService.addToCart(user.phoneNumber, newItem);
+          
+          // Refresh cart data ngay lập tức
+          const updatedCart = await cartService.getUserCart(user.phoneNumber);
+          setItems(updatedCart);
+          
+          toast.success('Item added to cart');
+        } catch (error) {
+          console.error('Failed to add item:', error);
+          toast.error('Failed to add item to cart');
         }
       } else {
-        // Add new item
-        const newItem = { book, quantity };
-        const updatedItems = [...items, newItem];
-
-        if (isAuthenticated && user?.phoneNumber) {
-          try {
-            await cartService.addToCart(user.phoneNumber, newItem);
-            setItems(updatedItems);
-            toast.success('Item added to cart');
-          } catch (error) {
-            console.error('Failed to add item:', error);
-            toast.error('Failed to add item to cart');
-          }
-        } else {
-          setItems(updatedItems);
-          toast.success('Item added to cart');
-        }
+        setItems(prev => [...prev, newItem]);
+        toast.success('Item added to cart');
       }
     } catch (error) {
       console.error('Cart operation failed:', error);
@@ -258,21 +224,20 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (item && item.quantity > 1) {
       try {
-        const updatedItems = items.map(item =>
-          item.book.id === bookId
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        );
-        setItems(updatedItems);
-
         if (isAuthenticated && user?.phoneNumber) {
-          try {
-            await cartService.updateCartItem(user.phoneNumber, bookId, item.quantity - 1);
-            toast.success('Quantity updated');
-          } catch (error) {
-            console.error('Failed to update quantity:', error);
-            toast.error('Failed to update quantity');
-          }
+          await cartService.updateCartItem(user.phoneNumber, bookId, item.quantity - 1);
+          // Refresh cart data sau khi update
+          const updatedCart = await cartService.getUserCart(user.phoneNumber);
+          setItems(updatedCart);
+          toast.success('Quantity updated');
+        } else {
+          setItems(prev => 
+            prev.map(item => 
+              item.book.id === bookId 
+                ? { ...item, quantity: item.quantity - 1 }
+                : item
+            )
+          );
         }
       } catch (error) {
         console.error('Failed to decrease quantity:', error);

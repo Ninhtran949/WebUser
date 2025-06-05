@@ -52,16 +52,16 @@ export async function getUserCart(phoneNumber: string): Promise<CartItem[]> {
 
     return items.map(item => ({
       book: {
-        id: item.idProduct,
-        _id: item.idProduct,
+        id: item.idProduct.toString(),
+        _id: item.idProduct.toString(),
         title: item.nameProduct,
         author: item.idPartner,
         price: item.priceProduct,
         coverImage: item.imgProduct,
-        category: item.idCategory,
+        category: item.idCategory.toString()
       },
       quantity: item.numberProduct,
-      cartId: item.idCart
+      cartId: item.idCart.toString()
     }));
   } catch (error) {
     console.error('Error fetching cart:', error);
@@ -69,34 +69,34 @@ export async function getUserCart(phoneNumber: string): Promise<CartItem[]> {
   }
 }
 
-export const addToCart = async (phoneNumber: string, cartItem: CartItem): Promise<void> => {
+export const addToCart = async (phoneNumber: string, cartItem: CartItem): Promise<CartItemResponse> => {
   try {
     if (!phoneNumber) throw new Error('Phone number is required');
     if (!cartItem.book) throw new Error('Book information is required');
-
-    // Get maximum cart ID with error handling
-    let idCart = new Date().getTime().toString();
-    
-    // Use book._id if available, otherwise use book.id
-    const idProduct = cartItem.book._id || cartItem.book.id;
-    if (!idProduct) {
-      throw new Error('Invalid product ID');
-    }
+    if (!cartItem.book.productId) throw new Error('Product information is required');
 
     const payload = {
-      idProduct,
-      idCart,
-      idCategory: cartItem.book.category || '1',
-      imgProduct: cartItem.book.coverImage || '',
-      idPartner: cartItem.book.author || '',
-      nameProduct: cartItem.book.title || '',
+      idProduct: parseInt(cartItem.book.productId.codeProduct),
+      idCategory: parseInt(cartItem.book.productId.codeCategory),
+      imgProduct: cartItem.book.productId.imgProduct || '',
+      idPartner: cartItem.book.productId.userPartner || '',
+      nameProduct: cartItem.book.productId.nameProduct || '',
       userClient: phoneNumber,
-      priceProduct: Number(cartItem.book.price) || 0,
+      priceProduct: parseFloat(cartItem.book.productId.priceProduct),
       numberProduct: cartItem.quantity || 1,
-      totalPrice: (Number(cartItem.book.price) || 0) * (cartItem.quantity || 1)
+      totalPrice: parseFloat(cartItem.book.productId.priceProduct) * (cartItem.quantity || 1)
     };
 
-    await axios.post(`${API_URL}/cart`, payload);
+    console.log('Sending payload:', payload);
+    const response = await axios.post(`${API_URL}/cart`, payload);
+    console.log('Response from server:', response.data);    
+    // Validate response data
+    const cartResponse = response.data;
+    if (!isCartItemResponse(cartResponse)) {
+      throw new Error('Invalid response from server');
+    }
+    
+    return cartResponse;
   } catch (error) {
     console.error('Error adding to cart:', error);
     throw new Error(isErrorWithResponse(error) 

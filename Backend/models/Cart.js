@@ -2,18 +2,17 @@ const mongoose = require('mongoose');
 
 const cartSchema = new mongoose.Schema({
   idProduct: { 
-    type: String, // Changed to String to match MongoDB _id
+    type: Number,
     required: true,
-    ref: 'Product' // Reference to Product model
+    ref: 'Product'
   },
   idCart: { 
-    type: String,
-    required: true,
+    type: Number,
     unique: true,
-    default: () => new mongoose.Types.ObjectId().toString()
+    
   },
   idCategory: { 
-    type: String, 
+    type: Number,
     required: true 
   },
   imgProduct: { 
@@ -29,7 +28,7 @@ const cartSchema = new mongoose.Schema({
     required: true
   },
   userClient: { 
-    type: String, // This will store phoneNumber
+    type: String,
     required: true,
     index: true
   },
@@ -45,8 +44,7 @@ const cartSchema = new mongoose.Schema({
   },
   totalPrice: { 
     type: Number,
-    required: true,
-    min: 0
+    required: true
   }
 }, {
   timestamps: true
@@ -55,7 +53,20 @@ const cartSchema = new mongoose.Schema({
 // Compound index for userClient and idProduct to ensure unique products per user
 cartSchema.index({ userClient: 1, idProduct: 1 }, { unique: true });
 
-// Pre-save middleware to calculate totalPrice
+// Pre-save middleware để tự động tạo idCart TRƯỚC khi tính totalPrice
+cartSchema.pre('save', async function(next) {
+  if (this.isNew && !this.idCart) {
+    try {
+      const lastCart = await this.constructor.findOne({}, {}, { sort: { idCart: -1 } });
+      this.idCart = lastCart ? lastCart.idCart + 1 : 1;
+    } catch (error) {
+      return next(error);
+    }
+  }
+  next();
+});
+
+// Pre-save middleware để tính totalPrice
 cartSchema.pre('save', function(next) {
   if (this.isModified('numberProduct') || this.isModified('priceProduct')) {
     this.totalPrice = this.numberProduct * this.priceProduct;

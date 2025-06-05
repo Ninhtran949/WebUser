@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 const HomePage = () => {
-  const [bestsellerBooks, setBestsellerBooks] = useState<Book[]>([]);
+  const [bestsellerBooks, setBestsellerBooks] = useState<Book[]>([]); // using react hook useState để quản lý trạng thái của bestsellerBooks
   const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
   const [featuredBooks, setFeaturedBooks] = useState<Book[]>([]);
   const [newArrivals, setNewArrivals] = useState<Book[]>([]);
@@ -35,7 +35,7 @@ const HomePage = () => {
     price: parseFloat(book.productId?.priceProduct || '0'),
     coverImage: book.productId?.imgProduct || '',
     category: book.category || 'Uncategorized',
-    productId: book.productId || null,
+    productId: book.productId || undefined,
     isbn13: book.isbn13 || '',
     publisher: book.publisher || '',
     publicationDate: book.publicationDate || new Date().toISOString(),
