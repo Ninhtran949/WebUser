@@ -51,15 +51,25 @@ const userSchema = new mongoose.Schema({
   ]
 });
 
-// Function to encrypt data
 function encrypt(value) {
-  return CryptoJS.AES.encrypt(value, secretKey).toString();
+  if (!value) return;
+  try {
+    return CryptoJS.AES.encrypt(value, secretKey).toString();
+  } catch (error) {
+    console.error('Encryption error:', error);
+    return value;
+  }
 }
 
-// Function to decrypt data
 function decrypt(value) {
-  const bytes = CryptoJS.AES.decrypt(value, secretKey);
-  return bytes.toString(CryptoJS.enc.Utf8);
+  if (!value) return;
+  try {
+    const bytes = CryptoJS.AES.decrypt(value, secretKey);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return value;
+  }
 }
 
 // Export User model

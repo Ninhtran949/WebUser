@@ -1,6 +1,7 @@
 import { XIcon } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { decryptData } from '../utils/encryption';
 
 interface OrderConfirmDialogProps {
   isOpen: boolean;
@@ -11,6 +12,10 @@ interface OrderConfirmDialogProps {
 const OrderConfirmDialog = ({ isOpen, onClose, onConfirm }: OrderConfirmDialogProps) => {
   const { items } = useCart();
   const { user } = useAuth();
+
+  // Decrypt user data
+  const decryptedName = user?.name ? decryptData(user.name) : '';
+  const decryptedAddress = user?.address ? decryptData(user.address) : '';
 
   if (!isOpen) return null;
 
@@ -45,8 +50,9 @@ const OrderConfirmDialog = ({ isOpen, onClose, onConfirm }: OrderConfirmDialogPr
           <div className="border-t border-b border-gray-200 py-4">
             <h3 className="font-semibold mb-3">Customer Information</h3>
             <div className="space-y-2">
-              <p><span className="text-gray-600">Name:</span> {user?.name}</p>
-                <p><span className="text-gray-600">Phone:</span> {user?.phoneNumber}</p>
+              <p><span className="text-gray-600">Name:</span> {decryptedName}</p>
+              <p><span className="text-gray-600">Phone:</span> {user?.phoneNumber}</p>
+              <p><span className="text-gray-600">Address:</span> {decryptedAddress}</p>
             </div>
           </div>
 

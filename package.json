@@ -2,6 +2,10 @@
   "dependencies": {
     "@types/axios": "^0.9.36",
     "axios": "^1.8.4",
+    "crypto-js": "^4.2.0",
     "mongoose": "^8.13.2"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "^4.2.2"
   }
 }
