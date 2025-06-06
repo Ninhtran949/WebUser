@@ -186,7 +186,11 @@ const BookDetails = () => {
                 </div>
                 <div>
                   <p className="text-gray-600">Publication date:</p>
-                  <p className="font-medium">{new Date(book.publicationDate).toLocaleDateString()}</p>
+                  <p className="font-medium">
+                    {book.publicationDate 
+                      ? new Date(book.publicationDate).toLocaleDateString()
+                      : 'Not available'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-600">Pages:</p>
@@ -209,7 +213,7 @@ const BookDetails = () => {
           <CustomerReviews reviews={book.customerReviews} />
         )}
         {/* Related Books */}
-        {book.category && (
+        {book.category && book._id && (
           <RelatedBooks category={book.category} currentBookId={book._id} />
         )}
       </div>

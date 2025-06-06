@@ -56,7 +56,7 @@ const BookGrid = ({ books, columns = 6 }: BookGridProps) => {
     <div className={`grid ${gridClass} gap-4`}>
       {books.map((book) => (
         <div 
-          key={book.id} 
+          key={book._id} 
           onClick={(e) => handleBookClick(book._id, e)}
           className="flex flex-col border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
         >
@@ -110,13 +110,13 @@ const BookGrid = ({ books, columns = 6 }: BookGridProps) => {
               </div>
               <button
                 className={`action-button p-2 transition ${
-                  isFavorite(book.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                  isFavorite(book._id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
                 }`}
                 onClick={(e) => handleFavoriteClick(e, book)}
               >
                 <HeartIcon 
                   size={18} 
-                  className={isFavorite(book.id) ? "fill-current" : ""}
+                  className={isFavorite(book._id) ? "fill-current" : ""}
                 />
               </button>
             </div>

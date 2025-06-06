@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 const favoriteSchema = new mongoose.Schema({
   userId: {
     type: String,
-    required: true
+
+    required: true,
+    index: true
+
   },
   bookId: {
     type: String,
@@ -19,7 +22,10 @@ const favoriteSchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    required: true
+
+    required: true,
+    min: 0
+
   },
   coverImage: {
     type: String,
@@ -27,13 +33,17 @@ const favoriteSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    default: ''
+
+    required: true
+
   }
 }, {
   timestamps: true
 });
 
-// Tạo compound index để đảm bảo mỗi user chỉ có thể thêm một sách vào favorites một lần
+
+// Compound index to ensure a user can't favorite the same book twice
+
 favoriteSchema.index({ userId: 1, bookId: 1 }, { unique: true });
 
 module.exports = mongoose.model('Favorite', favoriteSchema);

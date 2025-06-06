@@ -9,6 +9,7 @@ interface FavoriteContextType {
   removeFromFavorites: (bookId: string) => void;
   isFavorite: (bookId: string) => boolean;
   clearFavorites: () => void;
+  favoriteCount: number;
 }
 
 const FavoriteContext = createContext<FavoriteContextType | undefined>(undefined);
@@ -24,6 +25,7 @@ export const useFavorites = () => {
 export const FavoriteProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [favorites, setFavorites] = useState<Book[]>([]);
   const { user, isAuthenticated } = useAuth();
+  const favoriteCount = favorites.length;
 
   useEffect(() => {
     const loadFavorites = async () => {
@@ -99,8 +101,10 @@ export const FavoriteProvider: React.FC<{ children: ReactNode }> = ({ children }
       addToFavorites, 
       removeFromFavorites, 
       isFavorite,
-      clearFavorites
+      clearFavorites,
+      favoriteCount
     }}>
       {children}
     </FavoriteContext.Provider>
-  );};
+  );
+};

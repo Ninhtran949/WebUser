@@ -25,11 +25,17 @@ const UserAccount = () => {
     const fetchOrders = async () => {
       if (!user?.phoneNumber) return;
       
-      setLoading(true);
-      try {
+      setLoading(true);      try {
+        // Get the access token
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+          throw new Error('No access token found');
+        }
+
         const response = await fetch(`${import.meta.env.VITE_API_URL}/bills/cart/user/${user.phoneNumber}`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
           }
         });
 

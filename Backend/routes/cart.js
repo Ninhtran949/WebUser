@@ -1,18 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const Cart = require('../models/Cart');
+const Product = require('../models/Product');
 
 // Nhận `io` như tham số
 module.exports = (io) => {
-  
-  // Lấy Cart theo userClient
+    // Lấy Cart theo phoneNumber (userClient)
   router.get('/user/:userClient', async (req, res) => {
     try {
-      const carts = await Cart.find({ userClient: req.params.userClient });
-      if (carts.length === 0) {
-        return res.status(404).json({ message: 'No carts found for this userClient' });
-      }
-      res.status(200).json(carts);
+      const carts = await Cart.find({ userClient: req.params.userClient })
+        .sort({ createdAt: -1 }); // Sắp xếp theo thời gian tạo mới nhất
+      res.status(200).json(carts || []);
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -20,138 +18,99 @@ module.exports = (io) => {
 
   // Tạo Cart mới
   router.post('/', async (req, res) => {
-    const cart = new Cart({
-      idProduct: req.body.idProduct,
-      idCart: req.body.idCart,
-      idCategory: req.body.idCategory,
-      imgProduct: req.body.imgProduct,
-      idPartner: req.body.idPartner,
-      nameProduct: req.body.nameProduct,
-      userClient: req.body.userClient,
-      priceProduct: req.body.priceProduct,
-      numberProduct: req.body.numberProduct,
-      totalPrice: req.body.totalPrice
-    });
-
     try {
+      console.log('Received payload:', req.body); // Thêm logging
+
+      // Lấy thông tin sản phẩm từ Product
+      const product = await Product.findOne({ codeProduct: req.body.idProduct });
+      console.log('Found product:', product); // Thêm logging
+
+      if (!product) {
+        return res.status(404).json({ 
+          message: 'Product not found',
+          requestedId: req.body.idProduct 
+        });
+      }
+
+      // Kiểm tra sản phẩm trong giỏ hàng
+      const existingCart = await Cart.findOne({
+        userClient: req.body.userClient,
+        idProduct: product.codeProduct
+      });
+
+      if (existingCart) {
+        // Cập nhật số lượng nếu đã tồn tại
+        existingCart.numberProduct += req.body.numberProduct;
+        existingCart.totalPrice = existingCart.priceProduct * existingCart.numberProduct;
+        const updatedCart = await existingCart.save();
+        io.emit('cartUpdated', updatedCart);
+        return res.status(200).json(updatedCart);
+      }
+
+      // Tạo mới cart với thông tin từ product
+      const cart = new Cart({
+        idProduct: product.codeProduct,
+        idCategory: product.codeCategory,
+        imgProduct: product.imgProduct,
+        idPartner: product.userPartner,
+        nameProduct: product.nameProduct,
+        userClient: req.body.userClient,
+        priceProduct: parseFloat(product.priceProduct),
+        numberProduct: parseInt(req.body.numberProduct),
+        totalPrice: parseFloat(product.priceProduct) * parseInt(req.body.numberProduct)
+      });
+
       const newCart = await cart.save();
-      io.emit('cartCreated', newCart); // Phát sự kiện khi tạo Cart
+      io.emit('cartCreated', newCart);
       res.status(201).json(newCart);
     } catch (err) {
+      console.error('Error creating cart:', err);
       res.status(400).json({ message: err.message });
     }
   });
 
-  // Cập nhật Cart theo userClient
-  router.patch('/user/:userClient', async (req, res) => {
+  // Cập nhật Cart
+  router.patch('/idCart/:idCart', async (req, res) => {
     try {
-      const cart = await Cart.findOne({ userClient: req.params.userClient });
+      const cart = await Cart.findOne({ idCart: req.params.idCart });
       if (!cart) {
         return res.status(404).json({ message: 'Cart not found' });
       }
 
-      // Cập nhật các trường
-      if (req.body.idProduct !== undefined) cart.idProduct = req.body.idProduct; // Cập nhật idProduct
-      if (req.body.idCategory !== undefined) cart.idCategory = req.body.idCategory; // Cập nhật idCategory
-      if (req.body.imgProduct !== undefined) cart.imgProduct = req.body.imgProduct; // Cập nhật imgProduct
-      if (req.body.idPartner !== undefined) cart.idPartner = req.body.idPartner; // Cập nhật idPartner
-      if (req.body.nameProduct !== undefined) cart.nameProduct = req.body.nameProduct; // Cập nhật nameProduct
-      if (req.body.userClient !== undefined) cart.userClient = req.body.userClient; // Cập nhật userClient
-      if (req.body.priceProduct !== undefined) cart.priceProduct = req.body.priceProduct; // Cập nhật priceProduct
-      if (req.body.numberProduct !== undefined) cart.numberProduct = req.body.numberProduct; // Cập nhật numberProduct
-      if (req.body.totalPrice !== undefined) cart.totalPrice = req.body.totalPrice; // Cập nhật totalPrice
+      if (req.body.numberProduct !== undefined) {
+        cart.numberProduct = parseInt(req.body.numberProduct);
+        cart.totalPrice = cart.priceProduct * cart.numberProduct;
+      }
 
       const updatedCart = await cart.save();
-      io.emit('cartUpdated', updatedCart); // Phát sự kiện khi cập nhật Cart
+      io.emit('cartUpdated', updatedCart);
       res.status(200).json(updatedCart);
     } catch (err) {
       res.status(400).json({ message: err.message });
     }
   });
 
-// Cập nhật Cart theo IdCart
-router.patch('/idCart/:idCart', async (req, res) => {
-  try {
-      // Tìm giỏ hàng theo idCart
-      const cart = await Cart.findOne({ idCart: req.params.idCart }); 
-      if (!cart) {
-          return res.status(404).json({ message: 'Cart not found' });
-      }
-
-      //Cập nhật các trường nếu có trong body request
-      if (req.body.idProduct !== undefined) cart.idProduct = req.body.idProduct; // Cập nhật idProduct
-      if (req.body.idCategory !== undefined) cart.idCategory = req.body.idCategory; // Cập nhật idCategory
-      if (req.body.imgProduct !== undefined) cart.imgProduct = req.body.imgProduct; // Cập nhật imgProduct
-      if (req.body.idPartner !== undefined) cart.idPartner = req.body.idPartner; // Cập nhật idPartner
-      if (req.body.nameProduct !== undefined) cart.nameProduct = req.body.nameProduct; // Cập nhật nameProduct
-      if (req.body.userClient !== undefined) cart.userClient = req.body.userClient; // Cập nhật userClient
-      if (req.body.priceProduct !== undefined) cart.priceProduct = req.body.priceProduct; // Cập nhật priceProduct
-      if (req.body.numberProduct !== undefined) cart.numberProduct = req.body.numberProduct; // Cập nhật numberProduct
-      if (req.body.totalPrice !== undefined) cart.totalPrice = req.body.totalPrice; // Cập nhật totalPrice
-
-      // Lưu thay đổi vào cơ sở dữ liệu
-      const updatedCart = await cart.save();
-
-      // Phát sự kiện khi cập nhật Cart
-      io.emit('cartUpdated', updatedCart);
-      
-      // Trả về giỏ hàng đã được cập nhật
-      res.status(200).json(updatedCart);
-  } catch (err) {
-      res.status(400).json({ message: err.message });
-  }
-});
-
-
-  // Xóa Cart theo ID
-  router.delete('/:id', async (req, res) => {
+  // Xóa Cart theo idCart
+  router.delete('/:idCart', async (req, res) => {
     try {
-      const cart = await Cart.findById(req.params.id);
+      const cart = await Cart.findOneAndDelete({ idCart: req.params.idCart });
       if (!cart) {
         return res.status(404).json({ message: 'Cart not found' });
       }
 
-      await cart.deleteOne();
-      io.emit('cartDeleted', { id: req.params.id });
+      io.emit('cartDeleted', { idCart: req.params.idCart });
       res.status(200).json({ message: 'Cart deleted' });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
   });
 
-  // Cập nhật Cart theo ID
-  router.patch('/:id', async (req, res) => {
-    try {
-      const cart = await Cart.findById(req.params.id);
-      if (!cart) {
-        return res.status(404).json({ message: 'Cart not found' });
-      }
-
-      // Cập nhật các trường
-      if (req.body.numberProduct !== undefined) {
-        cart.numberProduct = req.body.numberProduct;
-        // Tự động cập nhật totalPrice nếu numberProduct thay đổi
-        cart.totalPrice = cart.priceProduct * cart.numberProduct;
-      }
-    
-      if (req.body.totalPrice !== undefined) {
-        cart.totalPrice = req.body.totalPrice;
-      }
-
-      const updatedCart = await cart.save();
-      io.emit('cartUpdated', updatedCart);
-      res.status(200).json(updatedCart);
-    } catch (err) {
-      res.status(400).json({ message: err.message });
-    }
-  });
-
-  // Xóa tất cả Cart của một userClient
+  // Xóa tất cả Cart của một user
   router.delete('/user/:userClient', async (req, res) => {
     try {
       const result = await Cart.deleteMany({ userClient: req.params.userClient });
       if (result.deletedCount === 0) {
-        return res.status(404).json({ message: 'No carts found for this userClient' });
+        return res.status(404).json({ message: 'No carts found for this user' });
       }
       io.emit('cartsClearedForUser', { userClient: req.params.userClient });
       res.status(200).json({ message: 'All carts deleted for this user', count: result.deletedCount });
@@ -159,5 +118,6 @@ router.patch('/idCart/:idCart', async (req, res) => {
       res.status(500).json({ message: err.message });
     }
   });
+
   return router;
 };
