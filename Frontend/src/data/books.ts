@@ -11,8 +11,10 @@ export interface CustomerReview {
 }
 
 // Re-export Book interface using 'export type'
-export type { Book } from '../types/book';
-
+export type { 
+  Book,
+  ProductId,
+} from '../types/book';
 export interface APIBook {
   _id: string;
   productId?: {

@@ -3,6 +3,7 @@ import { Book } from '../data/books';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useFavorites } from '../contexts/FavoriteContext';
+import { validateAndProcessImage, getFallbackImage } from '../utils/imageUtils';
 
 interface BookGridProps {
   books: Book[];
@@ -62,9 +63,18 @@ const BookGrid = ({ books, columns = 6 }: BookGridProps) => {
         >
           <div className="relative h-48 group">
             <img
-              src={book.coverImage}
+              src={validateAndProcessImage(book.productId?.imgProduct || '')}
               alt={book.title}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error('Image load error:', {
+                  src: (e.target as HTMLImageElement).src,
+                  bookTitle: book.title
+                });
+                const target = e.target as HTMLImageElement;
+                target.src = getFallbackImage();
+                target.onerror = null; // Prevent infinite loop
+              }}
             />
             <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <button 
