@@ -1,3 +1,13 @@
+export interface ProductId {
+  _id: string;
+  codeCategory: string;
+  codeProduct: string;
+  imgProduct: string;
+  nameProduct: string;
+  priceProduct: string;
+  userPartner: string;
+}
+
 export interface EditorialReview {
   content: string;
   source: string;

@@ -35,7 +35,7 @@ const HomePage = () => {
     price: parseFloat(book.productId?.priceProduct || '0'),
     coverImage: book.productId?.imgProduct || '',
     category: book.category || 'Uncategorized',
-    productId: book.productId || undefined,
+    productId: book.productId || null,  // Changed from undefined to null
     isbn13: book.isbn13 || '',
     publisher: book.publisher || '',
     publicationDate: book.publicationDate || new Date().toISOString(),
