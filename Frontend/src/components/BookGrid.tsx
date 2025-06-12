@@ -35,7 +35,17 @@ const BookGrid = ({ books, columns = 6 }: BookGridProps) => {
     ) {
       return; // Không thực hiện navigation
     }
-    navigate(`/book/${id}`);
+    
+    // Scroll to top trước khi navigate
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    
+    // Delay navigate một chút để scroll có thể hoàn thành
+    setTimeout(() => {
+      navigate(`/book/${id}`);
+    }, 100);
   };
 
   const handleAddToCart = (e: React.MouseEvent, book: Book) => {
@@ -69,7 +79,12 @@ const BookGrid = ({ books, columns = 6 }: BookGridProps) => {
             <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <button 
                 className="action-button bg-white text-gray-800 p-2 rounded-full hover:bg-blue-100 transition" 
-                onClick={(e) => handleBookClick(book._id, e)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Scroll to top trước khi navigate
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  setTimeout(() => navigate(`/book/${book._id}`), 100);
+                }}
                 aria-label="Quick view"
               >
                 <EyeIcon size={18} />

@@ -21,6 +21,14 @@ const BookDetails = () => {
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [isAddedToFavorite, setIsAddedToFavorite] = useState(false);
 
+  // Scroll to top khi component mount hoặc id thay đổi
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, [id]);
+
   useEffect(() => {
     const fetchBookDetails = async () => {
       if (!id) return;
