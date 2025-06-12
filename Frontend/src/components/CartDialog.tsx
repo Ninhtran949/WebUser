@@ -148,25 +148,25 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
     if (isAuthenticated && user) {
       const createBill = async () => {
         try {
-          // Tạo đối tượng Bill từ cart items
+          // Tạo đối tượng Bill từ cart items với idClient là số điện thoại
           const bill: Bill = {
             Cart: items.map(item => ({
               idCart: Date.now(),
-              idCategory: 1, // Cần xác định category ID
-              idPartner: '0', // Cần xác định partner ID
+              idCategory: 1,
+              idPartner: '0',
               idProduct: parseInt(item.book.id),
               imgProduct: item.book.coverImage,
               nameProduct: item.book.title,
               numberProduct: item.quantity,
               priceProduct: item.book.price,
               totalPrice: item.book.price * item.quantity,
-              userClient: user.phoneNumber
+              userClient: user.phoneNumber // Số điện thoại của user
             })),
             dayOut: new Date().toISOString().split('T')[0],
             idBill: Date.now(),
-            idClient: user.id,
-            idPartner: '0', // Cần xác định partner ID
-            status: 'Yes',
+            idClient: user.phoneNumber, // Thay đổi từ user.id thành user.phoneNumber
+            idPartner: '0',
+            status: 'Yes', 
             timeOut: new Date().toTimeString().split(' ')[0],
             total: totalPrice
           };

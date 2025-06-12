@@ -3,11 +3,11 @@ const mongoose = require('mongoose');
 const refreshTokenSchema = new mongoose.Schema({
   token: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String, // Đổi thành String để lưu phoneNumber
     required: true
   },
   expiryDate: {

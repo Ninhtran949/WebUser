@@ -11,7 +11,7 @@ const UserAccount = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [orders, setOrders] = useState<OrderHistory[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { favorites } = useFavorites();
 
@@ -23,10 +23,13 @@ const UserAccount = () => {
 
   useEffect(() => {
     const fetchOrders = async () => {
-      if (!user?.phoneNumber) return;
+      if (!user?.phoneNumber || !isAuthenticated) return;
       
-      setLoading(true);      try {
-        // Get the access token
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Lấy token từ localStorage
         const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) {
           throw new Error('No access token found');
@@ -40,6 +43,11 @@ const UserAccount = () => {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            // Token hết hạn hoặc không hợp lệ
+            localStorage.removeItem('accessToken'); // Xóa token
+            throw new Error('Please login again');
+          }
           if (response.status === 404) {
             setOrders([]);
             return;
@@ -59,7 +67,7 @@ const UserAccount = () => {
           return acc;
         }, {});
 
-        // Transform into OrderHistory format
+        // Transform into OrderHistory format 
         const transformedOrders: OrderHistory[] = Object.entries(groupedOrders).map(([billId, items]) => ({
           idBill: billId,
           dayOut: new Date().toISOString(),
@@ -69,6 +77,8 @@ const UserAccount = () => {
         }));
 
         setOrders(transformedOrders);
+        setError(null);
+
       } catch (err) {
         console.error('Error fetching orders:', err);
         setError(err instanceof Error ? err.message : 'Failed to load orders');
@@ -78,7 +88,7 @@ const UserAccount = () => {
     };
 
     fetchOrders();
-  }, [user?.phoneNumber]);
+  }, [user?.phoneNumber, isAuthenticated]);
   const tabs = [
     {
       id: 'profile',
