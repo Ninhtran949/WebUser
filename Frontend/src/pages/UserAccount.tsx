@@ -5,6 +5,7 @@ import { useFavorites } from '../contexts/FavoriteContext';
 import { useCart } from '../contexts/CartContext';
 import { UserIcon, ShoppingBagIcon, HeartIcon, CreditCardIcon, MapPinIcon, ChevronRightIcon, LogOutIcon, BellIcon } from 'lucide-react';
 import type { Cart, OrderHistory, TransformedBill } from '../types/bill';
+import { apiClient } from '../utils/apiClient';
 
 const UserAccount = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -29,33 +30,7 @@ const UserAccount = () => {
       setError(null);
 
       try {
-        // Lấy token từ localStorage
-        const accessToken = localStorage.getItem('accessToken');
-        if (!accessToken) {
-          throw new Error('No access token found');
-        }
-
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/bills/cart/user/${user.phoneNumber}`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            // Token hết hạn hoặc không hợp lệ
-            localStorage.removeItem('accessToken'); // Xóa token
-            throw new Error('Please login again');
-          }
-          if (response.status === 404) {
-            setOrders([]);
-            return;
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const cartItems: Cart[] = await response.json();
+        const cartItems: Cart[] = await apiClient.get(`/bills/cart/user/${user.phoneNumber}`);
         
         // Group cart items by idBill
         const groupedOrders = cartItems.reduce((acc: TransformedBill, item: Cart) => {
@@ -82,6 +57,12 @@ const UserAccount = () => {
       } catch (err) {
         console.error('Error fetching orders:', err);
         setError(err instanceof Error ? err.message : 'Failed to load orders');
+        
+        // Nếu lỗi authentication, redirect về login
+        if (err instanceof Error && err.message === 'Please login again') {
+          // Có thể gọi logout từ AuthContext
+          // logout();
+        }
       } finally {
         setLoading(false);
       }
