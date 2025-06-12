@@ -539,7 +539,16 @@ const SavedItems = ({ items }: { items: any[] }) => {
       author: book.author,
       price: book.price,
       coverImage: book.coverImage,
-      category: book.category || 'Uncategorized' // Add missing category property
+      category: book.category || 'Uncategorized' ,// Add missing category property
+        // Thêm các trường còn thiếu
+    productId: null,
+    isbn13: '',
+    publisher: '',
+    publicationDate: new Date().toISOString(),
+    pages: 0,
+    overview: '',
+    editorialReviews: [],
+    customerReviews: []
     });
   };
 
