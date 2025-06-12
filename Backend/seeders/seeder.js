@@ -32,7 +32,8 @@ async function seedDatabase() {
       
       return {
         ...book,
-        productId: relatedProduct._id // Gán _id của product vào productId của book
+        productId: relatedProduct._id, // Gán _id của product vào productId của book
+        category: relatedProduct.codeCategory // Gán codeCategory từ product vào books
       };
     }).filter(book => book !== null); // Loại bỏ các book không có product tương ứng
 
