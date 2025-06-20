@@ -123,12 +123,12 @@ const CollectionPage = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar - Hidden on mobile, shown as overlay */}
           <div className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-md p-4 sticky top-4">
-              <h2 className="text-lg font-bold mb-4 text-gray-800">
+            <div className="hidden md:block bg-white rounded-lg shadow-md p-4 sticky top-4">
+              <h2 className="hidden md:block text-lg font-bold mb-4 text-gray-800">
                 Collections
               </h2>
               <nav>
-                <ul className="space-y-2">
+                <ul className="hidden md:block space-y-2">
                   {Object.entries(categoryMap).map(([key, category]) => (
                     <li key={key}>
                       <div className="relative">
