@@ -53,11 +53,14 @@ export const translations = {
     'auth.signingIn': 'Signing in...',
     'auth.creatingAccount': 'Creating account...',
     'auth.alreadyHaveAccount': 'Already have an account? Sign in',
+    'auth.continueWithGoogle': 'Continue with Google',
+    'auth.continueWithFacebook': 'Continue with Facebook',
     'auth.needAccount': "Don't have an account? Sign up",
     'auth.termsText': 'By continuing, you agree to our',
     'auth.termsOfUse': 'Terms of Use',
     'auth.andText': 'and',
     'auth.privacyPolicy': 'Privacy Policy',
+    'auth.orContinueWith': 'Or continue with',
 
     // Cart
     'cart.subtotal': 'Subtotal',
@@ -125,10 +128,13 @@ export const translations = {
     'auth.creatingAccount': 'Đang tạo tài khoản...',
     'auth.alreadyHaveAccount': 'Đã có tài khoản? Đăng nhập ngay',
     'auth.needAccount': 'Chưa có tài khoản? Đăng ký ngay',
+    'auth.continueWithGoogle': 'Tiếp tục với Google',
+    'auth.continueWithFacebook': 'Tiếp tục với Facebook',
     'auth.termsText': 'Bằng việc tiếp tục, bạn đồng ý với',
     'auth.termsOfUse': 'Điều khoản sử dụng',
     'auth.andText': 'và',
     'auth.privacyPolicy': 'Chính sách bảo mật',
+    'auth.orContinueWith': 'Hoặc tiếp tục với',
 
     // Cart
     'cart.subtotal': 'Tạm tính',

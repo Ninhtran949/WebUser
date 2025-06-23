@@ -37,6 +37,23 @@ const userSchema = new mongoose.Schema({
     default: '',
     set: encrypt,
     get: decrypt
+  },
+  email: {
+    type: String,
+    unique: true,
+    sparse: true,
+    set: encrypt,
+    get: decrypt
+  },
+  oauthProvider: {
+    type: String,
+    enum: ['google', 'facebook', null],
+    default: null
+  },
+  oauthId: {
+    type: String,
+    sparse: true,
+    index: true
   }
 }, { 
   toJSON: { getters: true },

@@ -7,17 +7,22 @@ const API_URL = import.meta.env.VITE_API_URL;
 interface User {
   id: string;
   name: string;
-  phoneNumber: string; // thay email bằng phoneNumber
-  address: string; // thêm trường address
-  strUriAvatar?: string; // thêm avatar, optional
+  phoneNumber: string;
+  address: string;
+  strUriAvatar?: string;
+  email?: string;
+  oauthProvider?: 'google' | 'facebook' | null;
+  oauthId?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (phoneNumber: string, password: string) => Promise<void>;
-  signup: (userData: SignupData) => Promise<void>; // thêm function signup
+  signup: (userData: SignupData) => Promise<void>;
   logout: () => void;
+  loginWithGoogle: () => void;
+  loginWithFacebook: () => void;
 }
 
 interface SignupData {
@@ -26,6 +31,9 @@ interface SignupData {
   password: string;
   address: string;
   strUriAvatar?: string;
+  email?: string;
+  oauthProvider?: 'google' | 'facebook' | null;
+  oauthId?: string;
 }
 
 // Thêm interface cho response login
@@ -103,15 +111,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     address: string;
     strUriAvatar?: string;
   }
-
   const signup = async (userData: SignupData): Promise<void> => {
     try {
+      // For OAuth signups
+      if (userData.oauthProvider && userData.oauthId) {
+        await axios.post<SignupResponse>(`${API_URL}/user/oauth/signup`, {
+          ...userData,
+          id: userData.email || userData.phoneNumber, // Use email for OAuth users if available
+        });
+        
+        // For OAuth users, we'll need to handle authentication differently
+        // This will be implemented in the OAuth flow
+        return;
+      }
+
+      // For regular signups
       await axios.post<SignupResponse>(`${API_URL}/user/signup`, {
         ...userData,
-        id: userData.phoneNumber, // Sử dụng phoneNumber làm id
+        id: userData.phoneNumber, // Continue using phoneNumber as ID for regular users
       });
 
-      // Auto login after successful signup
+      // Auto login after successful signup (only for non-OAuth users)
       await login(userData.phoneNumber, userData.password);
     } catch (error) {
       console.error('Signup error:', error);
@@ -132,6 +152,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loginWithGoogle = () => {
+    window.location.href = `${API_URL}/auth/google`;
+  };
+
+  const loginWithFacebook = () => {
+    window.location.href = `${API_URL}/auth/facebook`;
+  };
+
   return (
     <>
       <LoadingScreen isLoading={loading} />
@@ -140,7 +168,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: !!user,
         login,
         signup,
-        logout
+        logout,
+        loginWithGoogle,
+        loginWithFacebook
       }}>
         {!loading && children}
       </AuthContext.Provider>
