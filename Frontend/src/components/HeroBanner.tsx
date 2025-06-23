@@ -9,41 +9,50 @@ const HeroBanner = () => {
   const { isAuthenticated } = useAuth();
   const [showSignInDialog, setShowSignInDialog] = useState(false);
   const bestsellerSectionRef = useRef(null);
-  const slides = [{
-    title: 'Bestselling Books',
-    description: 'Discover the latest bestsellers and must-read titles',
-    image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=2787&auto=format&fit=crop',
-    color: 'bg-yellow-100',
-    icon: <TrendingUpIcon size={24} className="mr-2" />
-  }, {
-    title: 'New Releases',
-    description: 'Be the first to read the hottest new titles this month',
-    image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=2787&auto=format&fit=crop',
-    color: 'bg-blue-100',
-    icon: <BookOpenIcon size={24} className="mr-2" />
-  }, {
-    title: 'Award Winners',
-    description: "Explore critically acclaimed books that everyone's talking about",
-    image: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=2787&auto=format&fit=crop',
-    color: 'bg-purple-100',
-    icon: <StarIcon size={24} className="mr-2" />
-  }];
+  const slides = [
+    {
+      title: 'Bestselling Books',
+      description: 'Discover the latest bestsellers and must-read titles',
+      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=2787&auto=format&fit=crop',
+      bgImage: 'https://get.pxhere.com/photo/man-book-person-black-and-white-people-road-white-street-photography-city-reading-explore-hut-male-portrait-sitting-hat-fashion-clothing-black-monochrome-lady-streetphotography-flickr-bw-blackandwhite-project-candid-creativecommons-infrastructure-stadt-photograph-snapshot-germany-deutschland-sw-scene-bayern-bavaria-schwarzweis-stop-clothes-sitzend-32-menschen-strase-unposed-ungestellt-strasenfotografie-haltestelle-buch-lesen-mann-365-366-augsburg-erwachsener-project365-projekt-szene-adult-photoaday-pictureaday-project366-streettog-tog-zweisichtde-zweisichtig-bekleidung-kleidung-querformat-landscapeformat-samsunggalaxys6-photo-shoot-monochrome-photography-film-noir-human-positions-368419.jpg',
+      icon: <TrendingUpIcon size={24} className="mr-2" />,
+      textColor: 'text-white',
+      layoutClass: ''
+    },
+    {
+      title: 'New Releases',
+      description: 'Be the first to read the hottest new titles this month',
+      image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=2787&auto=format&fit=crop',
+      bgImage: 'https://thumbs.dreamstime.com/b/young-hispanic-american-man-reading-red-book-street-new-yo-young-hispanic-american-man-hair-bun-wearing-glasses-yellow-125181248.jpg',
+      icon: <BookOpenIcon size={24} className="mr-2" />,
+      textColor: 'text-yellow-900',
+      layoutClass: '' // căn phải, padding trái lớn để tránh ảnh người
+    },
+    {
+      title: 'Award Winners',
+      description: "Explore critically acclaimed books that everyone's talking about",
+      image: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=2787&auto=format&fit=crop',
+      bgImage:'https://images.pexels.com/photos/3762800/pexels-photo-3762800.jpeg',
+      icon: <StarIcon size={24} className="mr-2" />,
+      textColor: 'text-black',
+      layoutClass: ''
+    }
+  ];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-slide: set interval only once on mount
   useEffect(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
     intervalRef.current = setInterval(() => {
-      goToNextSlide();
+      setCurrentSlide(prev => (prev === slides.length - 1 ? 0 : prev + 1));
     }, 5000);
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [currentSlide]);
+  }, [slides.length]);
+
+  // Manual navigation with transition
   const goToNextSlide = () => {
     if (!isTransitioning) {
       setIsTransitioning(true);
@@ -70,7 +79,16 @@ const HeroBanner = () => {
       setShowSignInDialog(true);
     }
   };
-  return <div className={`w-full py-12 px-4 transition-colors duration-500 relative ${slides[currentSlide].color}`}>
+  return (
+    <div
+      className="w-full py-12 px-4 transition-colors duration-500 relative"
+      style={{
+        backgroundImage: `url(${slides[currentSlide].bgImage || slides[currentSlide].image})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       <div className="container mx-auto max-w-5xl">
         <div className="hidden md:block">
           <button className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-100 p-2 rounded-full shadow-md transition z-30 focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={goToPrevSlide} aria-label="Previous slide">
@@ -81,15 +99,15 @@ const HeroBanner = () => {
           </button>
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:gap-8 relative">
-          <div className="md:w-3/5 text-center md:text-left mb-8 md:mb-0 relative z-20">
+          <div className={`md:w-3/5 text-center md:text-left mb-8 md:mb-0 relative z-20 ${slides[currentSlide].layoutClass}`}>
             <div className="inline-flex items-center bg-white bg-opacity-50 px-4 py-1 rounded-full mb-4">
               {slides[currentSlide].icon}
               <span className="font-medium">Featured Collection</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 transition-all duration-500">
+            <h1 className={`text-3xl md:text-4xl font-bold mb-4 transition-all duration-500 ${slides[currentSlide].textColor}`}>
               {slides[currentSlide].title}
             </h1>
-            <p className="text-lg mb-8 max-w-md transition-all duration-500 ">
+            <p className={`text-lg mb-8 max-w-md transition-all duration-500 ${slides[currentSlide].textColor}`}>
               {slides[currentSlide].description}
             </p>
             <div className="flex flex-wrap gap-4 justify-center md:justify-start">
@@ -138,6 +156,7 @@ const HeroBanner = () => {
           onClose={() => setShowSignInDialog(false)} 
         />
       )}
-    </div>;
+    </div>
+  );
 };
 export default HeroBanner;

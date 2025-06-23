@@ -42,7 +42,7 @@ const CategoryDropdown = ({
                 >
                   <StarIcon size={14} className="mr-2 text-yellow-500" />
                   <span className="group-hover:translate-x-1 transition-transform">
-                    B&N Bestsellers
+                     Bestsellers
                   </span>
                 </Link>
               </li>

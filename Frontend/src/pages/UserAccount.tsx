@@ -5,13 +5,14 @@ import { useFavorites } from '../contexts/FavoriteContext';
 import { useCart } from '../contexts/CartContext';
 import { UserIcon, ShoppingBagIcon, HeartIcon, CreditCardIcon, MapPinIcon, ChevronRightIcon, LogOutIcon, BellIcon } from 'lucide-react';
 import type { Cart, OrderHistory, TransformedBill } from '../types/bill';
+import { apiClient } from '../utils/apiClient';
 
 const UserAccount = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [orders, setOrders] = useState<OrderHistory[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { favorites } = useFavorites();
 
@@ -23,31 +24,13 @@ const UserAccount = () => {
 
   useEffect(() => {
     const fetchOrders = async () => {
-      if (!user?.phoneNumber) return;
+      if (!user?.phoneNumber || !isAuthenticated) return;
       
-      setLoading(true);      try {
-        // Get the access token
-        const accessToken = localStorage.getItem('accessToken');
-        if (!accessToken) {
-          throw new Error('No access token found');
-        }
+      setLoading(true);
+      setError(null);
 
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/bills/cart/user/${user.phoneNumber}`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setOrders([]);
-            return;
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const cartItems: Cart[] = await response.json();
+      try {
+        const cartItems: Cart[] = await apiClient.get(`/bills/cart/user/${user.phoneNumber}`);
         
         // Group cart items by idBill
         const groupedOrders = cartItems.reduce((acc: TransformedBill, item: Cart) => {
@@ -59,7 +42,7 @@ const UserAccount = () => {
           return acc;
         }, {});
 
-        // Transform into OrderHistory format
+        // Transform into OrderHistory format 
         const transformedOrders: OrderHistory[] = Object.entries(groupedOrders).map(([billId, items]) => ({
           idBill: billId,
           dayOut: new Date().toISOString(),
@@ -69,16 +52,24 @@ const UserAccount = () => {
         }));
 
         setOrders(transformedOrders);
+        setError(null);
+
       } catch (err) {
         console.error('Error fetching orders:', err);
         setError(err instanceof Error ? err.message : 'Failed to load orders');
+        
+        // Nếu lỗi authentication, redirect về login
+        if (err instanceof Error && err.message === 'Please login again') {
+          // Có thể gọi logout từ AuthContext
+          // logout();
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchOrders();
-  }, [user?.phoneNumber]);
+  }, [user?.phoneNumber, isAuthenticated]);
   const tabs = [
     {
       id: 'profile',
@@ -539,7 +530,16 @@ const SavedItems = ({ items }: { items: any[] }) => {
       author: book.author,
       price: book.price,
       coverImage: book.coverImage,
-      category: book.category || 'Uncategorized' // Add missing category property
+      category: book.category || 'Uncategorized' ,// Add missing category property
+        // Thêm các trường còn thiếu
+    productId: null,
+    isbn13: '',
+    publisher: '',
+    publicationDate: new Date().toISOString(),
+    pages: 0,
+    overview: '',
+    editorialReviews: [],
+    customerReviews: []
     });
   };
 

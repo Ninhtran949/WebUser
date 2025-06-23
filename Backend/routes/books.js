@@ -98,4 +98,19 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Add new endpoint to get book by productId
+router.get('/product/:productId', async (req, res) => {
+  try {
+    const book = await Book.findOne({ productId: req.params.productId })
+      .populate('productId');
+    
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+    res.json(book);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

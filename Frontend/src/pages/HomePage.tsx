@@ -35,7 +35,7 @@ const HomePage = () => {
     price: parseFloat(book.productId?.priceProduct || '0'),
     coverImage: book.productId?.imgProduct || '',
     category: book.category || 'Uncategorized',
-    productId: book.productId || undefined,
+    productId: book.productId || null,  // Changed from undefined to null
     isbn13: book.isbn13 || '',
     publisher: book.publisher || '',
     publicationDate: book.publicationDate || new Date().toISOString(),
@@ -91,13 +91,30 @@ const HomePage = () => {
     }, 5000);
   };
 
+  const handleNavigateAndScroll = (path: string) => {
+    // Nếu đang ở homepage thì chỉ scroll
+    if (path === '/' || window.location.pathname === '/') {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    } else {
+      // Nếu đang ở trang khác thì navigate và scroll
+      navigate(path);
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return <main className="flex-grow">
     <HeroBanner />
     <section className="bg-white py-6 border-b">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div 
-            onClick={() => navigate("/collection/bestsellers")}
+            onClick={() => handleNavigateAndScroll("/collection/bestsellers")}
             className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition cursor-pointer"
             role="button"
             tabIndex={0}
@@ -105,11 +122,12 @@ const HomePage = () => {
             <div className="bg-blue-100 p-3 rounded-full mb-3">
               <TrendingUpIcon size={24} className="text-blue-800" />
             </div>
-            <h3 className="font-medium">Bestsellers</h3>
+            <h3 className="font-medium text-2xl font-bold text-blue-800">Bestsellers</h3>
             <p className="text-xs text-gray-600 mt-1">Top books this month</p>
           </div>
+
           <div
-            onClick={() => navigate("/collection/new-releases")}
+            onClick={() => handleNavigateAndScroll("/collection/new-releases")}
             className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition cursor-pointer"
             role="button"
             tabIndex={0}
@@ -117,11 +135,12 @@ const HomePage = () => {
             <div className="bg-green-100 p-3 rounded-full mb-3">
               <SparklesIcon size={24} className="text-green-800" />
             </div>
-            <h3 className="font-medium">New Releases</h3>
+            <h3 className="font-medium text-2xl font-bold text-blue-800">New Releases</h3>
             <p className="text-xs text-gray-600 mt-1">Fresh off the press</p>
           </div>
+
           <div
-            onClick={() => navigate("/collection/fiction")}
+            onClick={() => handleNavigateAndScroll("/collection/fiction")}
             className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition cursor-pointer"
             role="button"
             tabIndex={0}
@@ -129,11 +148,12 @@ const HomePage = () => {
             <div className="bg-purple-100 p-3 rounded-full mb-3">
               <BookOpenIcon size={24} className="text-purple-800" />
             </div>
-            <h3 className="font-medium">Fiction</h3>
+            <h3 className="font-medium text-2xl font-bold text-blue-800">Fiction</h3>
             <p className="text-xs text-gray-600 mt-1">Popular stories</p>
           </div>
+
           <div
-            onClick={() => navigate("/collection/non-fiction")}
+            onClick={() => handleNavigateAndScroll("/collection/non-fiction")}
             className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition cursor-pointer"
             role="button"
             tabIndex={0}
@@ -141,7 +161,7 @@ const HomePage = () => {
             <div className="bg-amber-100 p-3 rounded-full mb-3">
               <UsersIcon size={24} className="text-amber-800" />
             </div>
-            <h3 className="font-medium">Non-Fiction</h3>
+            <h3 className="font-medium text-2xl font-bold text-blue-800">Non-Fiction</h3>
             <p className="text-xs text-gray-600 mt-1">Real-world knowledge</p>
           </div>
         </div>

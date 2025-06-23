@@ -21,6 +21,14 @@ const BookDetails = () => {
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [isAddedToFavorite, setIsAddedToFavorite] = useState(false);
 
+  // Scroll to top khi component mount hoặc id thay đổi
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, [id]);
+
   useEffect(() => {
     const fetchBookDetails = async () => {
       if (!id) return;
@@ -36,13 +44,13 @@ const BookDetails = () => {
           price: parseFloat(bookData.productId?.priceProduct || '0'),
           coverImage: bookData.productId?.imgProduct || '',
           category: bookData.category || 'Uncategorized',
-          productId: bookData.productId,
+          productId: bookData.productId || null, // Changed from undefined to null
           isbn13: bookData.isbn13 || '',
           publisher: bookData.publisher || '',
           publicationDate: bookData.publicationDate || new Date().toISOString(),
           pages: bookData.pages || 0,
           overview: bookData.overview || '',
-          editorialReviews: bookData.editorialReviews || [],
+          editorialReviews: bookData.editorialReviews || [],  
           customerReviews: bookData.customerReviews || []
         };
         setBook(transformedBook);

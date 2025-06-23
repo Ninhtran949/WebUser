@@ -2,7 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
-
+const cookieParser = require('cookie-parser');
+// Cleanup expired tokens periodically
+require('./utils/tokenCleanup');
 const http = require('http');
 const socketIo = require('socket.io');
 
@@ -74,7 +76,7 @@ app.use('/favorites', favoritesRouter);
 const paymentZaloRouter = require('./services/paymentzalo');
 app.use('/zalopay', paymentZaloRouter);        // Import và sử dụng các endpoint từ paymentzalo.js
 
-
+app.use(cookieParser());
 // Import và thiết lập WebSocket chat
 const setupWebSocket = require('./services/chat');
 setupWebSocket(server);
@@ -108,3 +110,4 @@ server.listen(PORT, () => {
 
 // Xuất io để sử dụng trong các router nếu cần
 module.exports = io;
+

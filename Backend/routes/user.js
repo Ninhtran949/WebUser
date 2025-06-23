@@ -50,26 +50,43 @@ router.get('/phone/:phoneNumber', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    console.log('Login attempt:', { username, password });
-
     const user = await User.findOne({ phoneNumber: username });
-    if (!user) {
-      console.log('User not found with phone:', username);
-      return res.status(400).json({ message: 'User not found' });
-    }
     
-    console.log('Found user:', { userId: user._id, phone: user.phoneNumber, hashedPassword: user.password });
-    
-    const isMatch = await bcrypt.compare(password, user.password);
-    console.log('Password comparison result:', isMatch);
-    
-    if (!isMatch) {
-      console.log('Invalid password for user:', username);
+    if (!user || !await bcrypt.compare(password, user.password)) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Revoke all existing refresh tokens for this user
+    await RefreshToken.updateMany(
+      { userId: user.phoneNumber, isRevoked: false },
+      { isRevoked: true }
+    );
+
+    // Create new refresh token
+    const refreshToken = jwt.sign(
+      { id: user.phoneNumber },
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    // Save new refresh token
+    await RefreshToken.create({
+      token: refreshToken,
+      userId: user.phoneNumber,
+      expiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      isRevoked: false
+    });
+
+    // Generate access token
     const accessToken = generateAccessToken(user);
 
+    // Set httpOnly cookie với session ID
+    res.cookie('sessionId', user.phoneNumber, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    // Chỉ gửi access token về client
     res.json({
       accessToken,
       user: {
@@ -81,6 +98,7 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -88,33 +106,25 @@ router.post('/login', async (req, res) => {
 // Đăng xuất
 router.post('/logout', async (req, res) => {
   try {
-    const refreshToken = req.body.refreshToken;
-    console.log('Logout attempt with refresh token:', refreshToken);
-
-    if (!refreshToken) {
-      console.log('No refresh token found. You are already logged out.');
-      return res.status(200).json({ message: 'No refresh token found. You are already logged out.' });
+    const sessionId = req.cookies.sessionId;
+    
+    if (!sessionId) {
+      return res.status(200).json({ message: 'Already logged out' });
     }
 
-    // Tìm và cập nhật refresh token để thu hồi
-    const token = await RefreshToken.findOneAndUpdate(
-      { token: refreshToken },
-      { isRevoked: true },
-      { new: true }
+    // Revoke ALL refresh tokens for this user
+    const result = await RefreshToken.updateMany(
+      { userId: sessionId, isRevoked: false },
+      { isRevoked: true }
     );
 
-    if (!token) {
-      console.log('Refresh token not found. You are already logged out.');
-      return res.status(200).json({ message: 'Refresh token not found. You are already logged out.' });
-    }
+    console.log(`Revoked ${result.modifiedCount} tokens for user ${sessionId}`);
 
-    console.log('Refresh token revoked:', token);
-
-    // Xóa cookie
-    res.clearCookie('refreshToken');
+    // Clear session cookie
+    res.clearCookie('sessionId');
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
-    console.error('Error during logout:', error);
+    console.error('Logout error:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -310,6 +320,36 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ message: 'Token expired' });
     }
     res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+// Tạo access token mới từ refresh token
+router.post('/token/refresh', async (req, res) => {
+  try {
+    // Lấy session ID từ cookie
+    const sessionId = req.cookies.sessionId;
+    if (!sessionId) {
+      return res.status(401).json({ message: 'No session found' });
+    }
+
+    // Tìm refresh token trong DB
+    const refreshTokenDoc = await RefreshToken.findOne({ 
+      userId: sessionId,
+      isRevoked: false,
+      expiryDate: { $gt: new Date() }
+    });
+
+    if (!refreshTokenDoc) {
+      return res.status(403).json({ message: 'Invalid session' });
+    }
+
+    // Tạo access token mới
+    const user = await User.findOne({ phoneNumber: sessionId });
+    const accessToken = generateAccessToken(user);
+
+    res.json({ accessToken });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

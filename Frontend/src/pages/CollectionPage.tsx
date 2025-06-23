@@ -4,6 +4,7 @@ import { ChevronRightIcon, ChevronDownIcon } from 'lucide-react';
 import Masonry from 'react-masonry-css';
 import { Book } from '../types/book';
 import { getBooksByCategory } from '../services/bookService';
+import { validateAndProcessImage } from '../utils/imageUtils';
 import './CollectionPage.css';
 
 // Map categories theo rule từ backend
@@ -122,12 +123,12 @@ const CollectionPage = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar - Hidden on mobile, shown as overlay */}
           <div className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-md p-4 sticky top-4">
-              <h2 className="text-lg font-bold mb-4 text-gray-800">
+            <div className="hidden md:block bg-white rounded-lg shadow-md p-4 sticky top-4">
+              <h2 className="hidden md:block text-lg font-bold mb-4 text-gray-800">
                 Collections
               </h2>
               <nav>
-                <ul className="space-y-2">
+                <ul className="hidden md:block space-y-2">
                   {Object.entries(categoryMap).map(([key, category]) => (
                     <li key={key}>
                       <div className="relative">
@@ -203,7 +204,7 @@ const CollectionPage = () => {
                         <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group">
                           <div className="relative aspect-[2/3] overflow-hidden">
                             <img
-                              src={book.coverImage}
+                              src={validateAndProcessImage(book.coverImage)}
                               alt={book.title}
                               className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
                               loading="lazy"

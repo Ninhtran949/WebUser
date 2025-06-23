@@ -75,6 +75,18 @@ export const getBookById = async (id: string): Promise<APIBook> => {
   }
 };
 
+export const getBookByProductId = async (productId: string): Promise<APIBook> => {
+  try {
+    const response = await axios.get<APIBook>(`${API_URL}/books/product/${productId}`);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch book details: ${error.message}`);
+    }
+    throw new Error('An unknown error occurred while fetching book details');
+  }
+};
+
 export const getRelatedBooks = async (category: string, currentBookId: string): Promise<APIBook[]> => {
   try {
     const response = await axios.get<APIBook[]>(`${API_URL}/books/related/${category}?excludeId=${currentBookId}`);

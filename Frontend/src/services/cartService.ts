@@ -58,7 +58,15 @@ export async function getUserCart(phoneNumber: string): Promise<CartItem[]> {
         author: item.idPartner,
         price: item.priceProduct,
         coverImage: item.imgProduct,
-        category: item.idCategory.toString()
+        category: item.idCategory.toString(),
+        productId: null,
+        isbn13: '',
+        publisher: '',
+        publicationDate: new Date().toISOString(),
+        pages: 0,
+        overview: '',
+        editorialReviews: [],
+        customerReviews: []
       },
       quantity: item.numberProduct,
       cartId: item.idCart.toString()

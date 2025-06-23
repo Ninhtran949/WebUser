@@ -393,7 +393,7 @@ const Header = () => {
                 <ul className="space-y-3">
                   {navigationItems.map(item => (
                     <li key={item.title} className="py-2">
-                      <Link to={`/${item.category}`}>{item.title}</Link>
+                      <Link to={`/collection/${item.category}`}>{item.title}</Link>
                     </li>
                   ))}
                 </ul>
