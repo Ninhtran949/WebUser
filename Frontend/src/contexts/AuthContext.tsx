@@ -23,6 +23,7 @@ interface AuthContextType {
   logout: () => void;
   loginWithGoogle: () => void;
   loginWithFacebook: () => void;
+  checkAuth: () => Promise<void>;
 }
 
 interface SignupData {
@@ -170,7 +171,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signup,
         logout,
         loginWithGoogle,
-        loginWithFacebook
+        loginWithFacebook,
+        checkAuth // <-- thêm dòng này
       }}>
         {!loading && children}
       </AuthContext.Provider>
