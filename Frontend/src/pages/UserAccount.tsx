@@ -3,7 +3,7 @@ import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext';
 import { useFavorites } from '../contexts/FavoriteContext';
 import { useCart } from '../contexts/CartContext';
-import { UserIcon, ShoppingBagIcon, HeartIcon, CreditCardIcon, MapPinIcon, ChevronRightIcon, LogOutIcon, BellIcon } from 'lucide-react';
+import { UserIcon, ShoppingBagIcon, HeartIcon, CreditCardIcon, MapPinIcon, ChevronRightIcon, LogOutIcon, BellIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
 import type { Cart, OrderHistory, TransformedBill } from '../types/bill';
 import { apiClient } from '../utils/apiClient';
 
@@ -247,6 +247,7 @@ const UserAccount = () => {
 
 // Profile Settings Component
 const ProfileSettings = ({ user }: { user: any }) => {
+  const { checkAuth } = useAuth();
   const [formData, setFormData] = useState({
     name: user?.name || '',
     phoneNumber: user?.phoneNumber || '',
@@ -257,13 +258,32 @@ const ProfileSettings = ({ user }: { user: any }) => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const isOAuthUser = !!user?.oauthProvider;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
 
+    // Ưu tiên lấy _id nếu phoneNumber không hợp lệ
+    const isValidPhone = user?.phoneNumber && user.phoneNumber.trim() !== '' && user.phoneNumber !== ' ';
+    const userIdForUpdate = isValidPhone ? user.phoneNumber : user?.id; // <-- dùng user.id thay vì user._id
+
+    // Nếu vẫn không có _id thì báo lỗi
+    if (!userIdForUpdate) {
+      setMessage({ type: 'error', text: 'Cannot update profile: missing user identifier.' });
+      return;
+    }
+
+    // Chọn endpoint phù hợp
+    const url = isValidPhone
+      ? `${import.meta.env.VITE_API_URL}/user/id/${userIdForUpdate}`
+      : `${import.meta.env.VITE_API_URL}/user/oid/${userIdForUpdate}`;
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/user/id/${formData.phoneNumber}`, {
+      const response = await fetch(url, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -276,8 +296,16 @@ const ProfileSettings = ({ user }: { user: any }) => {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to update profile');
-      
+      if (!response.ok) {
+        if (response.status === 409) {
+          setMessage({ type: 'error', text: 'Phone number already in use' });
+        } else {
+          setMessage({ type: 'error', text: 'Failed to update profile' });
+        }
+        return;
+      }
+
+      await checkAuth();
       setMessage({ type: 'success', text: 'Profile updated successfully' });
       setIsEditing(false);
     } catch (error) {
@@ -294,21 +322,36 @@ const ProfileSettings = ({ user }: { user: any }) => {
       return;
     }
 
+    // Password strength check (same as backend)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{6,}$/;
+    if (!passwordRegex.test(formData.newPassword)) {
+      setMessage({ type: 'error', text: 'New password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.' });
+      return;
+    }
+
     try {
+      const payload: any = {
+        newPassword: formData.newPassword
+      };
+      if (!isOAuthUser) payload["oldPassword"] = formData.oldPassword;
       const response = await fetch(`${import.meta.env.VITE_API_URL}/user/change-password/${formData.phoneNumber}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
-        body: JSON.stringify({
-          oldPassword: formData.oldPassword,
-          newPassword: formData.newPassword
-        })
+        body: JSON.stringify(payload)
       });
 
-      if (!response.ok) throw new Error('Failed to change password');
-      
+      if (!response.ok) {
+        let errorMsg = 'Failed to change password';
+        try {
+          const data = await response.json();
+          if (data && data.message) errorMsg = data.message;
+        } catch {}
+        setMessage({ type: 'error', text: errorMsg });
+        return;
+      }
       setMessage({ type: 'success', text: 'Password changed successfully' });
       setFormData(prev => ({
         ...prev,
@@ -407,39 +450,71 @@ const ProfileSettings = ({ user }: { user: any }) => {
       <div className="border-t border-gray-200 pt-6">
         <h3 className="text-lg font-semibold mb-4">Change Password</h3>
         <form onSubmit={handlePasswordChange} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Current Password
-            </label>
-            <input
-              type="password"
-              value={formData.oldPassword}
-              onChange={e => setFormData({ ...formData, oldPassword: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+          {!isOAuthUser && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Current Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showOldPassword ? 'text' : 'password'}
+                  value={formData.oldPassword}
+                  onChange={e => setFormData({ ...formData, oldPassword: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 pr-10"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400"
+                  onClick={() => setShowOldPassword(v => !v)}
+                >
+                  {showOldPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                </button>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 New Password
               </label>
-              <input
-                type="password"
-                value={formData.newPassword}
-                onChange={e => setFormData({ ...formData, newPassword: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              />
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={formData.newPassword}
+                  onChange={e => setFormData({ ...formData, newPassword: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 pr-10"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400"
+                  onClick={() => setShowNewPassword(v => !v)}
+                >
+                  {showNewPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Confirm New Password
               </label>
-              <input
-                type="password"
-                value={formData.confirmPassword}
-                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 pr-10"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400"
+                  onClick={() => setShowConfirmPassword(v => !v)}
+                >
+                  {showConfirmPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                </button>
+              </div>
             </div>
           </div>
           <div className="flex justify-end">
@@ -477,7 +552,7 @@ const OrderHistory = ({
   if (error) {
     return (
       <div className="text-center py-8">
-        <div className="text-red-600 mb-2">Error loading orders</div>
+        <div className="text-red-600 mb-2">Không có sản phẩm nào được mua cạ =.=.</div>
         <p className="text-gray-600">{error}</p>
       </div>
     );

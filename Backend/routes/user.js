@@ -215,19 +215,50 @@ router.post('/signup', async (req, res) => {
 
 // Thay đổi mật khẩu người dùng
 router.patch('/change-password/:id', async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
+  let { oldPassword, newPassword } = req.body;
   const phoneNumber = req.params.id;
+
+  // Trim input
+  oldPassword = oldPassword ? oldPassword.trim() : '';
+  newPassword = newPassword ? newPassword.trim() : '';
+
+  // DEBUG LOGGING
+  console.log('[CHANGE-PASSWORD] phoneNumber param:', phoneNumber);
+  console.log('[CHANGE-PASSWORD] oldPassword (trimmed):', oldPassword);
+  console.log('[CHANGE-PASSWORD] newPassword (trimmed):', newPassword);
+
+  if (!newPassword) {
+    console.log('[CHANGE-PASSWORD] Missing new password');
+    return res.status(400).json({ message: 'New password is required.' });
+  }
 
   try {
     const user = await User.findOne({ phoneNumber: phoneNumber });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) {
+      console.log('[CHANGE-PASSWORD] User not found for phoneNumber:', phoneNumber);
+      return res.status(404).json({ message: 'User not found' });
+    }
+    console.log('[CHANGE-PASSWORD] User found:', user._id, user.phoneNumber);
+    console.log('[CHANGE-PASSWORD] User password hash:', user.password);
+    console.log('[CHANGE-PASSWORD] User oauthProvider:', user.oauthProvider);
 
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Old password is incorrect' });
+    // Nếu là user OAuth (password là ' ' hoặc rỗng hoặc có oauthProvider), bỏ qua kiểm tra oldPassword
+    const isOAuth = (!user.password || user.password === ' ') || !!user.oauthProvider;
+    if (!isOAuth) {
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      console.log('[CHANGE-PASSWORD] bcrypt.compare result:', isMatch);
+      if (!isMatch) {
+        console.log('[CHANGE-PASSWORD] Old password is incorrect');
+        return res.status(400).json({ message: 'Old password is incorrect' });
+      }
+    } else {
+      console.log('[CHANGE-PASSWORD] OAuth user, skip old password check');
+    }
 
     // Validate mật khẩu mới
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{6,}$/;
     if (!passwordRegex.test(newPassword)) {
+      console.log('[CHANGE-PASSWORD] New password does not meet requirements');
       return res.status(400).json({ 
         message: 'New password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.' 
       });
@@ -237,9 +268,10 @@ router.patch('/change-password/:id', async (req, res) => {
     user.password = hashedNewPassword;
     await user.save();
 
+    console.log('[CHANGE-PASSWORD] Password changed successfully for user:', user._id);
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
-    console.error('Error changing password:', error);
+    console.error('[CHANGE-PASSWORD] Error changing password:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -256,14 +288,13 @@ router.patch('/id/:id', async (req, res) => {
     if (req.body.address !== undefined) user.address = req.body.address;
     if (req.body.name !== undefined) user.name = req.body.name;
     if (req.body.phoneNumber !== undefined) {
-      // Kiểm tra xem số điện thoại mới đã tồn tại chưa
-      if (req.body.phoneNumber !== phoneNumber) {
-        const existingUser = await User.findOne({ phoneNumber: req.body.phoneNumber });
-        if (existingUser) {
-          return res.status(400).json({ message: 'Phone number already exists' });
-        }
+      // Kiểm tra nếu phoneNumber mới đã tồn tại cho user khác
+      const existingUser = await User.findOne({ phoneNumber: req.body.phoneNumber });
+      if (existingUser && existingUser.id !== user.id) {
+        return res.status(409).json({ message: 'Phone number already in use' });
       }
       user.phoneNumber = req.body.phoneNumber;
+      user.id = req.body.phoneNumber; // Đảm bảo id cũng được cập nhật
     }
     if (req.body.strUriAvatar !== undefined) user.strUriAvatar = req.body.strUriAvatar;
 
@@ -271,6 +302,34 @@ router.patch('/id/:id', async (req, res) => {
     res.json(updatedUser);
   } catch (err) {
     console.error('Error updating user:', err);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// UPDATE a User by OID
+router.patch('/oid/:oid', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.oid);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Kiểm tra trùng phoneNumber nếu có cập nhật
+    if (req.body.phoneNumber && req.body.phoneNumber !== user.phoneNumber) {
+      const existing = await User.findOne({ phoneNumber: req.body.phoneNumber });
+      if (existing) return res.status(409).json({ message: 'Phone number already in use' });
+    }
+
+    // Cập nhật các trường
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.phoneNumber) {
+      user.phoneNumber = req.body.phoneNumber;
+      user.id = req.body.phoneNumber;
+    }
+    if (req.body.address) user.address = req.body.address;
+    if (req.body.email) user.email = req.body.email;
+
+    await user.save();
+    res.json(user);
+  } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });

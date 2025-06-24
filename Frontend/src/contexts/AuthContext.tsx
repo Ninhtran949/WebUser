@@ -66,6 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Gọi API để verify token và lấy user info
       const response = await axios.get<User>(`${API_URL}/user/me`);
+      console.log('User data from checkAuth:', response.data); // Log user data for debugging
       setUser(response.data);
     } catch (error) {
       // Nếu token invalid, clear localStorage và user state
@@ -93,6 +94,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Chỉ lưu access token
       localStorage.setItem('accessToken', accessToken);
       
+      // Log user data for debugging (especially for OAuth)
+      console.log('User data after login:', userData);
+
       // Set user state
       setUser(userData);
       

@@ -57,9 +57,9 @@ passport.use(new FacebookStrategy({
         email: profile.emails ? profile.emails[0].value : '',
         oauthProvider: 'facebook',
         oauthId: profile.id,
-        address: '',
-        password: '',
-        phoneNumber: '',
+        address: ' ',
+        password: ' ',
+        phoneNumber: ' ',
       });
     }
     return done(null, user);
