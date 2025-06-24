@@ -18,7 +18,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (phoneNumber: string, password: string) => Promise<void>;
+  login: (phoneNumber: string, password: string, rememberMe?: boolean) => Promise<void>;
   signup: (userData: SignupData) => Promise<void>;
   logout: () => void;
   loginWithGoogle: () => void;
@@ -53,8 +53,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Thêm function để check authentication status
   const checkAuth = async () => {
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      
+      let accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        accessToken = sessionStorage.getItem('accessToken');
+      }
       if (!accessToken) {
         setUser(null);
         setLoading(false);
@@ -71,6 +73,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       // Nếu token invalid, clear localStorage và user state
       localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('accessToken');
       delete axios.defaults.headers.common['Authorization'];
       setUser(null);
     } finally {
@@ -82,7 +85,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     checkAuth();
   }, []);
 
-  const login = async (phoneNumber: string, password: string) => {
+  const login = async (phoneNumber: string, password: string, rememberMe: boolean = false) => {
     try {
       const response = await axios.post<LoginResponse>(`${API_URL}/user/login`, {
         username: phoneNumber,
@@ -91,8 +94,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const { accessToken, user: userData } = response.data;
 
-      // Chỉ lưu access token
-      localStorage.setItem('accessToken', accessToken);
+      // Lưu accessToken vào localStorage nếu rememberMe, ngược lại lưu vào sessionStorage
+      if (rememberMe) {
+        localStorage.setItem('accessToken', accessToken);
+        sessionStorage.removeItem('accessToken');
+      } else {
+        sessionStorage.setItem('accessToken', accessToken);
+        localStorage.removeItem('accessToken');
+      }
       
       // Log user data for debugging (especially for OAuth)
       console.log('User data after login:', userData);
@@ -152,6 +161,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       // Cleanup local storage và state
       localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('accessToken');
       delete axios.defaults.headers.common['Authorization'];
       setUser(null);
     }

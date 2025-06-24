@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import ForgotPasswordDialog from './ForgotPasswordDialog'
 interface SignInDialogProps {
   isOpen: boolean
   onClose: () => void
@@ -42,6 +43,8 @@ const SignInDialog = ({ isOpen, onClose }: SignInDialogProps) => {
   const [oauthLoading, setOAuthLoading] = useState<
     'google' | 'facebook' | null
   >(null)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const { login, signup, loginWithGoogle, loginWithFacebook } = useAuth()
   const { t } = useLanguage()
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +140,7 @@ const SignInDialog = ({ isOpen, onClose }: SignInDialogProps) => {
         await signup(formData)
         showToast('success', 'Đăng ký thành công!')
       } else {
-        await login(formData.phoneNumber, formData.password)
+        await login(formData.phoneNumber, formData.password, rememberMe)
         showToast('success', 'Đăng nhập thành công!')
       }
       onClose()
@@ -313,6 +316,8 @@ const SignInDialog = ({ isOpen, onClose }: SignInDialogProps) => {
                   <input
                     type="checkbox"
                     className="w-4 h-4 rounded border-gray-300 text-blue-800 focus:ring-blue-500 transition-colors"
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
                   />
                   <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-900">
                     {t('auth.rememberMe')}
@@ -321,6 +326,7 @@ const SignInDialog = ({ isOpen, onClose }: SignInDialogProps) => {
                 <button
                   type="button"
                   className="text-sm text-blue-800 hover:text-blue-900 hover:underline transition-colors"
+                  onClick={() => setShowForgotPassword(true)}
                 >
                   {t('auth.forgotPassword')}
                 </button>
@@ -442,6 +448,8 @@ const SignInDialog = ({ isOpen, onClose }: SignInDialogProps) => {
           </p>
         </div>
       </div>
+      {/* Forgot Password Dialog */}
+      <ForgotPasswordDialog isOpen={showForgotPassword} onClose={() => setShowForgotPassword(false)} />
     </div>
   )
 }

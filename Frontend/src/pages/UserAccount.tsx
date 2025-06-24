@@ -552,7 +552,7 @@ const OrderHistory = ({
   if (error) {
     return (
       <div className="text-center py-8">
-        <div className="text-red-600 mb-2">Không có sản phẩm nào được mua cạ =.=.</div>
+        <div className="text-red-600 mb-2">No products were purchased =.=.</div>
         <p className="text-gray-600">{error}</p>
       </div>
     );
