@@ -8,7 +8,16 @@ module.exports = (io) => {
     // Lấy Cart theo phoneNumber (userClient)
   router.get('/user/:userClient', async (req, res) => {
     try {
-      const carts = await Cart.find({ userClient: req.params.userClient })
+      // Validate userClient parameter
+      const userClient = req.params.userClient;
+      if (!userClient || userClient.trim() === '' || userClient === ' ') {
+        return res.status(400).json({ 
+          message: 'Invalid user identifier. Please update your profile with a valid phone number.',
+          code: 'INVALID_USER_ID'
+        });
+      }
+
+      const carts = await Cart.find({ userClient: userClient })
         .sort({ createdAt: -1 }); // Sắp xếp theo thời gian tạo mới nhất
       res.status(200).json(carts || []);
     } catch (err) {

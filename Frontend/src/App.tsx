@@ -11,6 +11,7 @@ import BookDetails from './pages/BookDetails';
 import CollectionPage from './pages/CollectionPage';
 import UserAccount from './pages/UserAccount';
 import OAuthSuccess from './pages/OAuthSuccess';
+import ToastProvider from './components/ToastProvider';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <FavoriteProvider>
               <div className="min-h-screen flex flex-col">
                 <Header />
+                <ToastProvider />
                 <Routes>
                   <Route path="/oauth-success" element={<OAuthSuccess />} />
                   <Route path="/" element={<HomePage />} />

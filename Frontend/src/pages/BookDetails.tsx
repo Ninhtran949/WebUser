@@ -9,6 +9,8 @@ import { useCart } from '../contexts/CartContext';
 import { useFavorites } from '../contexts/FavoriteContext';
 import SignInDialog from '../components/SignInDialog';
 import { Book, APIBook } from '../data/books';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 const BookDetails = () => {
   const { id } = useParams();
@@ -20,6 +22,7 @@ const BookDetails = () => {
   const [isSignInDialogOpen, setIsSignInDialogOpen] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [isAddedToFavorite, setIsAddedToFavorite] = useState(false);
+  const { user } = useAuth();
 
   // Scroll to top khi component mount hoặc id thay đổi
   useEffect(() => {
@@ -68,11 +71,28 @@ const BookDetails = () => {
     }
   }, [id]);
 
-  const handleAddToCart = () => {
-    if (book) {
-      addItem(book);
+  const handleAddToCart = async () => {
+    if (!book) return;
+    const phoneNumber = user?.phoneNumber;
+    if (!phoneNumber || phoneNumber.trim() === '' || phoneNumber === ' ') {
+      toast.error('Vui lòng cập nhật số điện thoại để sử dụng chức năng giỏ hàng!', {
+        position: 'top-center',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      return;
+    }
+    try {
+      await addItem(book);
       setIsAddedToCart(true);
       setTimeout(() => setIsAddedToCart(false), 2000);
+    } catch (err) {
+      // Nếu addItem thất bại, không set isAddedToCart
+      toast.error('Không thể thêm vào giỏ hàng. Vui lòng thử lại!');
     }
   };
 

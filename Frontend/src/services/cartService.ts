@@ -42,6 +42,12 @@ function isErrorWithResponse(error: unknown): error is ApiError {
 
 export async function getUserCart(phoneNumber: string): Promise<CartItem[]> {
   try {
+    // Validate phone number before making the request
+    if (!phoneNumber || phoneNumber.trim() === '' || phoneNumber === ' ') {
+      console.warn('Invalid phone number provided to getUserCart');
+      return [];
+    }
+
     const response = await axios.get(`${API_URL}/cart/user/${phoneNumber}`);
     const items = response.data;
     
@@ -79,7 +85,9 @@ export async function getUserCart(phoneNumber: string): Promise<CartItem[]> {
 
 export const addToCart = async (phoneNumber: string, cartItem: CartItem): Promise<CartItemResponse> => {
   try {
-    if (!phoneNumber) throw new Error('Phone number is required');
+    if (!phoneNumber || phoneNumber.trim() === '' || phoneNumber === ' ') {
+      throw new Error('Phone number is required');
+    }
     if (!cartItem.book) throw new Error('Book information is required');
     if (!cartItem.book.productId) throw new Error('Product information is required');
 

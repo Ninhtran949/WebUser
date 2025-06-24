@@ -3,6 +3,8 @@ import { Book } from '../data/books';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useFavorites } from '../contexts/FavoriteContext';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 interface BookGridProps {
   books: Book[];
@@ -13,6 +15,7 @@ const BookGrid = ({ books, columns = 6 }: BookGridProps) => {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+  const { user } = useAuth();
 
   const gridColumns = {
     2: 'grid-cols-1 sm:grid-cols-2',
@@ -50,6 +53,19 @@ const BookGrid = ({ books, columns = 6 }: BookGridProps) => {
 
   const handleAddToCart = (e: React.MouseEvent, book: Book) => {
     e.stopPropagation(); // Ngăn event bubble lên
+    const phoneNumber = user?.phoneNumber;
+    if (!phoneNumber || phoneNumber.trim() === '' || phoneNumber === ' ') {
+      toast.error('Vui lòng cập nhật số điện thoại để sử dụng chức năng giỏ hàng!', {
+        position: 'top-center',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      return;
+    }
     addItem(book);
   };
 
