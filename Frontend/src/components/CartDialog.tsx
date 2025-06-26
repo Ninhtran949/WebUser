@@ -70,11 +70,11 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
       ).join(', ');
       
       const description = `Book order: ${itemDescriptions}`;
-      const amountInVND = Math.round(totalPrice * 23000);
+      const amountIn$ = Math.round(totalPrice / 25000);
       
       const response = await createPayment({
         app_user: user?.id || 'guest',
-        amount: amountInVND,
+        amount: totalPrice,
         description: description
       });
       
@@ -245,7 +245,7 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
                       <div className="flex justify-between items-center mt-2">
                         <div className="flex items-center">
                           <span className="font-bold mr-4">
-                            ${(item.book.price * item.quantity).toFixed(2)}
+                            {(item.book.price * item.quantity).toFixed(2)}đ
                           </span>
                           <div className="flex items-center border rounded">
                             <button 
@@ -275,7 +275,7 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
               <div className="mt-6 border-t border-gray-200 pt-4">
                 <div className="flex justify-between mb-2">
                   <span>Subtotal ({itemCount} items)</span>
-                  <span className="font-bold">${totalPrice.toFixed(2)}</span>
+                  <span className="font-bold">{totalPrice.toFixed(2)}đ</span>
                 </div>
                 <div className="flex justify-between mb-4">
                   <span>Shipping</span>
@@ -283,7 +283,7 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
                 </div>
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>{totalPrice.toFixed(2)}đ</span>
                 </div>
               </div>
               <div className="mt-6 flex justify-between">

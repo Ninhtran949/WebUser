@@ -41,7 +41,7 @@ const OrderConfirmDialog = ({ isOpen, onClose, onConfirm }: OrderConfirmDialogPr
                     <p className="font-medium">{item.book.title}</p>
                     <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                   </div>
-                  <span className="font-medium">${(item.book.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-medium">{(item.book.price * item.quantity).toFixed(2)}đ</span>
                 </div>
               ))}
             </div>
@@ -59,7 +59,7 @@ const OrderConfirmDialog = ({ isOpen, onClose, onConfirm }: OrderConfirmDialogPr
           <div className="space-y-2">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>${totalPrice.toFixed(2)}</span>
+              <span>{totalPrice.toFixed(2)}đ</span>
             </div>
             <div className="flex justify-between">
               <span>Shipping</span>
@@ -67,7 +67,7 @@ const OrderConfirmDialog = ({ isOpen, onClose, onConfirm }: OrderConfirmDialogPr
             </div>
             <div className="flex justify-between text-lg font-bold">
               <span>Total</span>
-              <span>${totalPrice.toFixed(2)}</span>
+              <span>{totalPrice.toFixed(2)}đ</span>
             </div>
           </div>
 

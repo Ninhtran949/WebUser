@@ -11,6 +11,7 @@ import BookDetails from './pages/BookDetails';
 import CollectionPage from './pages/CollectionPage';
 import UserAccount from './pages/UserAccount';
 import OAuthSuccess from './pages/OAuthSuccess';
+import PaymentResult from './pages/PaymentResult';
 import ToastProvider from './components/ToastProvider';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
                   <Route path="/book/:id" element={<BookDetails />} />
                   <Route path="/collection/:category" element={<CollectionPage />} />
                   <Route path="/account/*" element={<UserAccount />} />
+                  <Route path="/payment-result" element={<PaymentResult />} />
                 </Routes>
                 <Footer />
                 <SupportButton />

@@ -136,7 +136,7 @@ const BookGrid = ({ books, columns = 6 }: BookGridProps) => {
             <div className="mt-auto flex items-center justify-between">
               <div>
                 <span className="font-bold text-sm">
-                  ${book.price.toFixed(2)}
+                  {book.price.toFixed(2)}đ
                 </span>
               </div>
               <button
