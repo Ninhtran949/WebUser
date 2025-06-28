@@ -37,6 +37,23 @@ const userSchema = new mongoose.Schema({
     default: '',
     set: encrypt,
     get: decrypt
+  },
+  email: {
+    type: String,
+    unique: true,
+    sparse: true,
+    set: encrypt,
+    get: decrypt
+  },
+  oauthProvider: {
+    type: String,
+    enum: ['google', 'facebook', null],
+    default: null
+  },
+  oauthId: {
+    type: String,
+    sparse: true,
+    index: true
   }
 }, { 
   toJSON: { getters: true },
@@ -71,6 +88,30 @@ function decrypt(value) {
     return value;
   }
 }
+
+// Middleware: Trim các trường quan trọng trước khi lưu hoặc update
+function trimUserFields(doc) {
+  if (doc.address) doc.address = doc.address.trim();
+  if (doc.phoneNumber) doc.phoneNumber = doc.phoneNumber.trim();
+  if (doc.name) doc.name = doc.name.trim();
+  if (doc.email) doc.email = doc.email.trim();
+}
+
+userSchema.pre('save', function(next) {
+  trimUserFields(this);
+  next();
+});
+
+userSchema.pre('findOneAndUpdate', function(next) {
+  const update = this.getUpdate();
+  if (update) {
+    if (update.address) update.address = update.address.trim();
+    if (update.phoneNumber) update.phoneNumber = update.phoneNumber.trim();
+    if (update.name) update.name = update.name.trim();
+    if (update.email) update.email = update.email.trim();
+  }
+  next();
+});
 
 // Export User model
 module.exports = mongoose.model('User', userSchema);

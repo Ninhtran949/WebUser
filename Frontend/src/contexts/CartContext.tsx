@@ -136,7 +136,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           toast.success('Item added to cart');
         } catch (error) {
           console.error('Failed to add item:', error);
-          toast.error('Failed to add item to cart');
+          toast.error('Vui lòng cập nhật số điện thoại để sử dụng chức năng giỏ hàng!');
         }
       } else {
         setItems(prev => [...prev, newItem]);

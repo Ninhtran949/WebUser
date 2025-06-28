@@ -7,17 +7,23 @@ const API_URL = import.meta.env.VITE_API_URL;
 interface User {
   id: string;
   name: string;
-  phoneNumber: string; // thay email bằng phoneNumber
-  address: string; // thêm trường address
-  strUriAvatar?: string; // thêm avatar, optional
+  phoneNumber: string;
+  address: string;
+  strUriAvatar?: string;
+  email?: string;
+  oauthProvider?: 'google' | 'facebook' | null;
+  oauthId?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (phoneNumber: string, password: string) => Promise<void>;
-  signup: (userData: SignupData) => Promise<void>; // thêm function signup
+  login: (phoneNumber: string, password: string, rememberMe?: boolean) => Promise<void>;
+  signup: (userData: SignupData) => Promise<void>;
   logout: () => void;
+  loginWithGoogle: () => void;
+  loginWithFacebook: () => void;
+  checkAuth: () => Promise<void>;
 }
 
 interface SignupData {
@@ -26,6 +32,9 @@ interface SignupData {
   password: string;
   address: string;
   strUriAvatar?: string;
+  email?: string;
+  oauthProvider?: 'google' | 'facebook' | null;
+  oauthId?: string;
 }
 
 // Thêm interface cho response login
@@ -44,8 +53,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Thêm function để check authentication status
   const checkAuth = async () => {
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      
+      let accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        accessToken = sessionStorage.getItem('accessToken');
+      }
       if (!accessToken) {
         setUser(null);
         setLoading(false);
@@ -57,10 +68,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Gọi API để verify token và lấy user info
       const response = await axios.get<User>(`${API_URL}/user/me`);
+      console.log('User data from checkAuth:', response.data); // Log user data for debugging
       setUser(response.data);
     } catch (error) {
       // Nếu token invalid, clear localStorage và user state
       localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('accessToken');
       delete axios.defaults.headers.common['Authorization'];
       setUser(null);
     } finally {
@@ -72,7 +85,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     checkAuth();
   }, []);
 
-  const login = async (phoneNumber: string, password: string) => {
+  const login = async (phoneNumber: string, password: string, rememberMe: boolean = false) => {
     try {
       const response = await axios.post<LoginResponse>(`${API_URL}/user/login`, {
         username: phoneNumber,
@@ -81,9 +94,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const { accessToken, user: userData } = response.data;
 
-      // Chỉ lưu access token
-      localStorage.setItem('accessToken', accessToken);
+      // Lưu accessToken vào localStorage nếu rememberMe, ngược lại lưu vào sessionStorage
+      if (rememberMe) {
+        localStorage.setItem('accessToken', accessToken);
+        sessionStorage.removeItem('accessToken');
+      } else {
+        sessionStorage.setItem('accessToken', accessToken);
+        localStorage.removeItem('accessToken');
+      }
       
+      // Log user data for debugging (especially for OAuth)
+      console.log('User data after login:', userData);
+
       // Set user state
       setUser(userData);
       
@@ -103,15 +125,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     address: string;
     strUriAvatar?: string;
   }
-
   const signup = async (userData: SignupData): Promise<void> => {
     try {
+      // For OAuth signups
+      if (userData.oauthProvider && userData.oauthId) {
+        await axios.post<SignupResponse>(`${API_URL}/user/oauth/signup`, {
+          ...userData,
+          id: userData.email || userData.phoneNumber, // Use email for OAuth users if available
+        });
+        
+        // For OAuth users, we'll need to handle authentication differently
+        // This will be implemented in the OAuth flow
+        return;
+      }
+
+      // For regular signups
       await axios.post<SignupResponse>(`${API_URL}/user/signup`, {
         ...userData,
-        id: userData.phoneNumber, // Sử dụng phoneNumber làm id
+        id: userData.phoneNumber, // Continue using phoneNumber as ID for regular users
       });
 
-      // Auto login after successful signup
+      // Auto login after successful signup (only for non-OAuth users)
       await login(userData.phoneNumber, userData.password);
     } catch (error) {
       console.error('Signup error:', error);
@@ -127,9 +161,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       // Cleanup local storage và state
       localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('accessToken');
       delete axios.defaults.headers.common['Authorization'];
       setUser(null);
     }
+  };
+
+  const loginWithGoogle = () => {
+    window.location.href = `${API_URL}/auth/google`;
+  };
+
+  const loginWithFacebook = () => {
+    window.location.href = `${API_URL}/auth/facebook`;
   };
 
   return (
@@ -140,7 +183,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: !!user,
         login,
         signup,
-        logout
+        logout,
+        loginWithGoogle,
+        loginWithFacebook,
+        checkAuth // <-- thêm dòng này
       }}>
         {!loading && children}
       </AuthContext.Provider>

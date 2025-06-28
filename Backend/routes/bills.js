@@ -161,13 +161,21 @@ router.get('/idPartner/:idPartner', async (req, res) => {
 // Lấy tất cả Cart theo userClient
 router.get('/cart/user/:userClient', authenticateToken, async (req, res) => {
   try {
+    // Validate userClient parameter
+    const userClient = req.params.userClient;
+    if (!userClient || userClient.trim() === '' || userClient === ' ') {
+      return res.status(400).json({ 
+        message: 'Invalid user identifier. Please update your profile with a valid phone number.',
+        code: 'INVALID_USER_ID'
+      });
+    }
+
     const bills = await Bill.find({
-      'Cart.userClient': req.params.userClient // Lọc theo userClient trong Cart
+      'Cart.userClient': userClient
     });
 
-    // Tạo mảng chứa các Cart với userClient khớp
     const userCarts = bills.flatMap(bill => 
-      bill.Cart.filter(cart => cart.userClient === req.params.userClient)
+      bill.Cart.filter(cart => cart.userClient === userClient)
     );
     
     if (userCarts.length === 0) {

@@ -7,6 +7,11 @@ const cookieParser = require('cookie-parser');
 require('./utils/tokenCleanup');
 const http = require('http');
 const socketIo = require('socket.io');
+//Oauth
+const session = require('express-session');
+
+const passport = require('./passport');
+const authRoutes = require('./routes/auth');
 
 // Khởi tạo Express và HTTP server
 const app = express();
@@ -53,6 +58,17 @@ app.use(authTracker);
 // Apply rate limiting to specific routes
 app.use('/user/login', loginLimiter);
 app.use('/user/token', refreshTokenLimiter);
+//
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+app.use('/auth', authRoutes);
+
 
 // Routes
 const productsRouter = require('./routes/products');
@@ -101,6 +117,7 @@ io.on('connection', (socket) => {
 
 // Error handler middleware (must be last)
 app.use(errorHandler);
+
 
 // Khởi chạy server
 const PORT = process.env.PORT || 8080;
