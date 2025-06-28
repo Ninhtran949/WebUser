@@ -111,7 +111,7 @@ const HomePage = () => {
   return <main className="flex-grow">
     <HeroBanner />
     <section className="bg-white py-6 border-b">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 animate-gradient-x bg-gradient-to-r from-blue-200 via-white-200 to-yellow-200 bg-[length:200%_200%]">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div 
             onClick={() => handleNavigateAndScroll("/collection/bestsellers")}
@@ -212,7 +212,7 @@ const HomePage = () => {
         <section className="bg-blue-800 text-white py-12 px-4">
           <div className="container mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-bold mb-2">
-              Stay Updated with BookStore
+              Stay Updated with Bookify
             </h2>
             <p className="mb-6">
               Subscribe to our newsletter for new releases, reading

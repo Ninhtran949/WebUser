@@ -197,9 +197,19 @@ const Header = () => {
             <button className="mr-4 md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
               <MenuIcon size={20} />
             </button>
-            <Link to="/" className="text-2xl font-bold text-blue-800 flex items-center">
-              <BookmarkIcon size={24} className="mr-2" />
-              BookStore
+
+
+
+            <Link to="/" className="flex items-center group">
+              <img src="./public/logo.png" className="mr-3 w-8 h-8 transition-all duration-300 group-hover:scale-110 drop-shadow-md" alt="Bookify Logo" />
+              <div className="relative">
+                <span className="text-3xl font-bold text-blue-800 tracking-wide relative">
+                  <span className="relative z-10">Book</span>
+                  <span className="text-2xl font-light text-blue-600 italic relative z-10">ify</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg -m-2 -z-10"></div>
+                </span>
+                <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-blue-400 group-hover:w-full transition-all duration-500"></div>
+              </div>
             </Link>
           </div>
 
@@ -290,7 +300,7 @@ const Header = () => {
                   ) : (
                     <>
                       <div className="px-4 py-3 text-center border-b border-gray-100">
-                        <p className="font-medium">Welcome to BookStore</p>
+                        <p className="font-medium">Welcome to Bookify</p>
                         <p className="text-xs text-gray-500">
                           Sign in to access your account
                         </p>

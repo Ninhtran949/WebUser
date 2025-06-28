@@ -12,3 +12,18 @@
   animation: shine 1.5s ease-in-out;
 }
 
+.bg-size-200 {
+  background-size: 200% 200%;
+}
+
+.bg-pos-0 {
+  background-position: 0% 50%;
+}
+
+.bg-pos-100 {
+  background-position: 100% 50%;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}

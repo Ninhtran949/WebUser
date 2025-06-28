@@ -259,7 +259,22 @@ router.get('/range', async (req, res) => {
   }
 });
 
-
+// Lấy tất cả Bill theo idClient (số điện thoại user)
+router.get('/user/:phoneNumber', async (req, res) => {
+  try {
+    const phoneNumber = req.params.phoneNumber;
+    if (!phoneNumber || phoneNumber.trim() === '' || phoneNumber === ' ') {
+      return res.status(400).json({ message: 'Invalid phone number' });
+    }
+    const bills = await Bill.find({ idClient: phoneNumber });
+    if (!bills || bills.length === 0) {
+      return res.status(404).json({ message: 'No bills found for this user' });
+    }
+    res.status(200).json(bills);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
   return router; // Đảm bảo trả về router
 };
