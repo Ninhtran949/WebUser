@@ -1,4 +1,4 @@
-bookstore/
+Bookify/
 ├── client/                         # Frontend - React + TypeScript
 │   ├── public/                    # Public static files
 │   ├── src/

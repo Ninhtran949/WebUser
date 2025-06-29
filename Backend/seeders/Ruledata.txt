@@ -1,8 +1,1 @@
-Book = codecategory(1, 'Book')
-Bestseller = codecategory(2, 'Bestseller')
-New Release = codecategory(3, 'New Release')
-Fiction = codecategory(4, 'Fiction')
-Non Fiction = codecategory(5, 'Non Fiction')
-Children = codecategory(6, 'Children')
-Textbooks = codecategory(7, 'Textbooks')
-Audiobook = codecategory(8, 'Audiobook')
+

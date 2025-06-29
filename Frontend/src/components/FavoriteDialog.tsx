@@ -73,7 +73,7 @@ const FavoriteDialog = ({ isOpen, onClose }: FavoriteDialogProps) => {
                       </h3>
                       <p className="text-sm text-gray-600">{book.author}</p>
                       <div className="flex justify-between items-center mt-2">
-                        <span className="font-bold">${book.price.toFixed(2)}</span>
+                        <span className="font-bold">{book.price.toFixed(2)}đ</span>
                         <div className="flex items-center gap-2">
                           <button 
                             onClick={() => handleAddToCart(book)}

@@ -81,7 +81,17 @@ export const translations = {
 
     // Error messages
     'error.signupFailed': 'Failed to create account. Please try again.',
-    'error.invalidCredentials': 'Invalid phone number or password.'
+    'error.invalidCredentials': 'Invalid phone number or password.',
+
+    // Collection Menu
+    'collection.literature': 'Literature',
+    'collection.economics': 'Economics',
+    'collection.psychology': 'Psychology',
+    'collection.education': 'Education',
+    'collection.childrensBooks': "Children's Books",
+    'collection.memoir': 'Memoir / Autobiography',
+    'collection.textbooks': 'Textbooks',
+    'collection.foreignLanguages': 'Foreign Languages',
   },
   vi: {
     // Header
@@ -155,7 +165,17 @@ export const translations = {
 
     // Error messages
     'error.signupFailed': 'Tạo tài khoản thất bại. Vui lòng thử lại.',
-    'error.invalidCredentials': 'Số điện thoại hoặc mật khẩu không chính xác.'
+    'error.invalidCredentials': 'Số điện thoại hoặc mật khẩu không chính xác.',
+
+    // Collection Menu
+    'collection.literature': 'Văn học',
+    'collection.economics': 'Kinh tế',
+    'collection.psychology': 'Tâm lý',
+    'collection.education': 'Giáo dục',
+    'collection.childrensBooks': 'Thiếu nhi',
+    'collection.memoir': 'Hồi ký',
+    'collection.textbooks': 'Giáo khoa',
+    'collection.foreignLanguages': 'Ngoại ngữ',
   }
 }
 export const LanguageProvider: React.FC<{

@@ -99,43 +99,24 @@ export const getRelatedBooks = async (category: string, currentBookId: string): 
   }
 };
 
-interface ProductType {
-  _id: string;
-  codeCategory: string;
-  codeProduct: string;
-  imgProduct: string;
-  nameProduct: string;
-  priceProduct: string;
-  userPartner: string;
-}
-
 export const getBooksByCategory = async (codeCategory: string): Promise<APIBook[]> => {
   try {
-    const response = await axios.get<ProductType[]>(`${API_URL}/products/category/${codeCategory}`);
-    console.log('Raw product response:', response.data);
-    
-    return response.data.map(product => ({
-      _id: product._id,
-      productId: {
-        _id: product._id,
-        codeCategory: product.codeCategory,
-        codeProduct: product.codeProduct,
-        imgProduct: product.imgProduct,
-        nameProduct: product.nameProduct,
-        priceProduct: product.priceProduct,
-        userPartner: product.userPartner
-      },
-      title: product.nameProduct,
-      author: product.userPartner,
-      isbn13: '',
-      publisher: '',
-      publicationDate: new Date().toISOString(),
-      pages: 0,
-      overview: '',
-      editorialReviews: [],
-      customerReviews: [],
-      category: 'General'
-    }));
+    // Lấy danh sách Product theo category
+    const response = await axios.get<{ _id: string }[]>(`${API_URL}/products/category/${codeCategory}`);
+    const products = response.data;
+    // Gọi tiếp API lấy Book theo productId cho từng Product
+    const bookPromises = products.map(async (product) => {
+      try {
+        const bookRes = await axios.get<APIBook>(`${API_URL}/books/product/${product._id}`);
+        return bookRes.data;
+      } catch (err) {
+        // Nếu không có Book cho Product này thì bỏ qua
+        return null;
+      }
+    });
+    const books = await Promise.all(bookPromises);
+    // Lọc bỏ các book null (không có book tương ứng)
+    return books.filter((b): b is APIBook => b !== null);
   } catch (error) {
     console.error('Error in getBooksByCategory:', error);
     if (error instanceof Error) {

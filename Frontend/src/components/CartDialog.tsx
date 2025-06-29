@@ -140,6 +140,9 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
     };
   };
   
+  const generateInt32Id = () => Math.floor(Math.random() * 2_000_000_000); // An toàn dưới ngưỡng int32
+  // Hàm này tạo một ID ngẫu nhiên trong khoảng từ 0 đến 2 tỷ, phù hợp với kiểu int32
+  
   const handlePaymentSuccess = () => {
     setIsProcessing(false);
     alert('Payment successful! Your order has been placed.');
@@ -150,26 +153,27 @@ const CartDialog = ({ isOpen, onClose }: CartDialogProps) => {
         try {
           // Tạo đối tượng Bill từ cart items với idClient là số điện thoại
           const bill: Bill = {
-            Cart: items.map(item => ({
-              idCart: Date.now(),
-              idCategory: 1,
-              idPartner: '0',
-              idProduct: parseInt(item.book.id),
-              imgProduct: item.book.coverImage,
-              nameProduct: item.book.title,
-              numberProduct: item.quantity,
-              priceProduct: item.book.price,
-              totalPrice: item.book.price * item.quantity,
-              userClient: user.phoneNumber // Số điện thoại của user
-            })),
-            dayOut: new Date().toISOString().split('T')[0],
-            idBill: Date.now(),
-            idClient: user.phoneNumber, // Thay đổi từ user.id thành user.phoneNumber
-            idPartner: '0',
-            status: 'Yes', 
-            timeOut: new Date().toTimeString().split(' ')[0],
-            total: totalPrice
-          };
+          Cart: items.map(item => ({
+            idCart: generateInt32Id(),
+            idCategory: item.book.category ? parseInt(item.book.category) : 0,
+            idPartner: item.book.author,
+            idProduct: parseInt(item.book.id),
+            imgProduct: item.book.coverImage,
+            nameProduct: item.book.title,
+            numberProduct: item.quantity,
+            priceProduct: item.book.price,
+            totalPrice: item.book.price * item.quantity,
+            userClient: user.phoneNumber
+          })),
+          dayOut: new Date().toISOString().split('T')[0],
+          idBill: generateInt32Id(),
+          idClient: user.phoneNumber,
+          idPartner: 'admin',
+          status: 'Yes',
+          timeOut: new Date().toTimeString().split(' ')[0],
+          total: totalPrice
+        };
+
           
           // Gọi API để tạo bill
           await axios.post<BillResponse>(`${import.meta.env.VITE_API_URL}/bills/addBill`, bill);
