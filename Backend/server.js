@@ -122,7 +122,7 @@ app.use(errorHandler);
 // Khởi chạy server
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
-  logger.info(`Server is running on http://localhost:${PORT}`);
+  logger.info(`Server is running on http://13.238.155.5:${PORT}`);
 });
 
 // Xuất io để sử dụng trong các router nếu cần
