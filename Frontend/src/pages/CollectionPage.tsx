@@ -6,17 +6,18 @@ import { Book } from '../types/book';
 import { getBooksByCategory } from '../services/bookService';
 import { validateAndProcessImage } from '../utils/imageUtils';
 import './CollectionPage.css';
+import { useLanguage } from '../contexts/LanguageContext';
 
 // Map categories theo rule từ backend
-const categoryMap = {
-  'books': { title: 'Books', codeCategory: '1' },
-  'bestsellers': { title: 'Bestsellers', codeCategory: '2' },
-  'new-releases': { title: 'New Releases', codeCategory: '3' },
-  'fiction': { title: 'Fiction', codeCategory: '4' },
-  'non-fiction': { title: 'Non Fiction', codeCategory: '5' },
-  'children': { title: 'Children', codeCategory: '6' },
-  'textbooks': { title: 'Textbooks', codeCategory: '7' },
-  'audiobooks': { title: 'Audiobooks', codeCategory: '8' }
+const collectionCategoryMap = {
+  literature: { key: 'collection.literature', codeCategory: '1' },
+  economics: { key: 'collection.economics', codeCategory: '2' },
+  psychology: { key: 'collection.psychology', codeCategory: '3' },
+  education: { key: 'collection.education', codeCategory: '4' },
+  childrensBooks: { key: 'collection.childrensBooks', codeCategory: '5' },
+  memoir: { key: 'collection.memoir', codeCategory: '6' },
+  textbooks: { key: 'collection.textbooks', codeCategory: '7' },
+  foreignLanguages: { key: 'collection.foreignLanguages', codeCategory: '8' },
 };
 
 const breakpointColumns = {
@@ -31,6 +32,7 @@ const breakpointColumns = {
 const CollectionPage = () => {
   const { category: categoryParam } = useParams<{ category: string }>();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryParam || 'books');
   const [books, setBooks] = useState<Book[]>([]);
@@ -39,7 +41,7 @@ const CollectionPage = () => {
   const [sortOrder, setSortOrder] = useState<'featured' | 'price-low' | 'price-high' | 'newest'>('featured');
 
   useEffect(() => {
-    if (categoryParam && categoryMap[categoryParam as keyof typeof categoryMap]) {
+    if (categoryParam && collectionCategoryMap[categoryParam as keyof typeof collectionCategoryMap]) {
       setSelectedCategory(categoryParam);
     } else {
       navigate('/collection/books');
@@ -48,35 +50,32 @@ const CollectionPage = () => {
 
   useEffect(() => {
     const fetchBooks = async () => {
-      const category = categoryMap[selectedCategory as keyof typeof categoryMap];
+      const category = collectionCategoryMap[selectedCategory as keyof typeof collectionCategoryMap];
       if (!category) return;
 
       setLoading(true);
       setError(null);
       try {
-        const response = await getBooksByCategory(category.codeCategory);
-        console.log('Raw response:', response); // For debugging
-
-        let transformedBooks = response
-          .filter(book => book.productId) // Only include books with productId
-          .map(book => ({
-            _id: book._id,
-            id: book._id,
-            title: book.productId?.nameProduct || book.title || 'Untitled',
-            author: book.productId?.userPartner || book.author || 'Unknown',
-            price: parseFloat(book.productId?.priceProduct || '0'),
-            coverImage: book.productId?.imgProduct || '',
-            category: category.title,
-            productId: book.productId || null,
-            isbn13: book.isbn13 || '',
-            publisher: book.publisher || '',
-            publicationDate: book.publicationDate || new Date().toISOString(),
-            pages: book.pages || 0,
-            overview: book.overview || '',
-            editorialReviews: book.editorialReviews || [],
-            customerReviews: book.customerReviews || []
-          }));
-
+        // Lấy danh sách Book chuẩn từ service (đã có đủ detail)
+        const books = await getBooksByCategory(category.codeCategory);
+        // Map lại APIBook thành Book chuẩn cho BookGrid
+        let transformedBooks = books.map(book => ({
+          _id: book._id,
+          id: book._id,
+          title: book.productId?.nameProduct || book.title || 'Untitled',
+          author: book.productId?.userPartner || book.author || 'Unknown',
+          price: parseFloat(book.productId?.priceProduct || '0'),
+          coverImage: book.productId?.imgProduct || '',
+          category: t(category.key),
+          productId: book.productId || null,
+          isbn13: book.isbn13 || '',
+          publisher: book.publisher || '',
+          publicationDate: book.publicationDate || new Date().toISOString(),
+          pages: book.pages || 0,
+          overview: book.overview || '',
+          editorialReviews: book.editorialReviews || [],
+          customerReviews: book.customerReviews || []
+        }));
         // Sort books based on selected order
         switch (sortOrder) {
           case 'price-low':
@@ -92,8 +91,6 @@ const CollectionPage = () => {
             // Featured - no sorting needed
             break;
         }
-
-        console.log('Transformed books:', transformedBooks); // For debugging
         setBooks(transformedBooks);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch books';
@@ -129,7 +126,7 @@ const CollectionPage = () => {
               </h2>
               <nav>
                 <ul className="hidden md:block space-y-2">
-                  {Object.entries(categoryMap).map(([key, category]) => (
+                  {Object.entries(collectionCategoryMap).map(([key, { key: tKey }]) => (
                     <li key={key}>
                       <div className="relative">
                         <button
@@ -140,7 +137,7 @@ const CollectionPage = () => {
                           }`}
                           onClick={() => handleCategorySelect(key)}
                         >
-                          <span className="font-medium">{category.title}</span>
+                          <span className="font-medium">{t(tKey)}</span>
                           {expandedCategory === key ? (
                             <ChevronDownIcon size={16} />
                           ) : (
@@ -162,7 +159,7 @@ const CollectionPage = () => {
               <div className="p-6 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <h1 className="text-2xl font-bold text-gray-800">
-                    {categoryMap[selectedCategory as keyof typeof categoryMap]?.title}
+                    {t(collectionCategoryMap[selectedCategory as keyof typeof collectionCategoryMap]?.key || '')}
                   </h1>
                   <div className="flex items-center gap-4">
                     <select 

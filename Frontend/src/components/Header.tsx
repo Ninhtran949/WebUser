@@ -10,6 +10,7 @@ import { useCart } from '../contexts/CartContext';
 import { useFavorites } from '../contexts/FavoriteContext';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -45,150 +46,58 @@ const Header = () => {
   const handleFavoriteClick = () => {
     setIsFavoriteDialogOpen(true);
   };
-  const navigationItems = [{
-    title: 'Books',
-    category: 'books',
-    featuredCategories: [{
+  // Chỉ còn menu collection, dùng key dịch
+  const navigationItems = [
+    {
+      title: t('collection.literature'),
+      category: 'literature',
+      featuredCategories: [],
+      subcategories: [],
+    },
+    {
+      title: t('collection.economics'),
+      category: 'economics',
+      featuredCategories: [],
+      subcategories: [],
+    },
+    {
+      title: t('collection.psychology'),
+      category: 'psychology',
+      featuredCategories: [],
+      subcategories: [],
+    },
+    {
+      title: t('collection.education'),
+      category: 'education',
+      featuredCategories: [],
+      subcategories: [],
+    },
+    {
+      title: t('collection.childrensBooks'),
+      category: 'childrensBooks',
+      featuredCategories: [],
+      subcategories: [],
+    },
+    {
+      title: t('collection.memoir'),
+      category: 'memoir',
+      featuredCategories: [],
+      subcategories: [],
+    },
+    {
+      title: t('collection.textbooks'),
+      category: 'textbooks',
+      featuredCategories: [],
+      subcategories: [],
+    },
+    {
+      title: t('collection.foreignLanguages'),
+      category: 'foreignLanguages',
+      featuredCategories: [],
+      subcategories: [],
+    },
+  ];
 
-      name: 'Best Sellers',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }, {
-      name: 'New Arrivals',
-      image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=180&h=120&fit=crop'
-    }, {
-      name: 'Signed Books',
-      image: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=180&h=120&fit=crop'
-    }],
-    subcategories: [{
-      name: 'Fiction',
-      links: ['Mystery', 'Romance', 'Science Fiction', 'Fantasy', 'Horror']
-    }, {
-      name: 'Non-Fiction',
-      links: ['Biography', 'History', 'Science', 'Self-Help', 'Travel']
-    }, {
-      name: "Children's",
-      links: ['Picture Books', 'Middle Grade', 'Young Adult', 'Educational', 'Board Books']
-    }]
-  }, {
-    title: 'Bestsellers',
-    category: 'bestsellers',
-    featuredCategories: [{
-      name: 'Fiction Bestsellers',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }, {
-      name: 'Non-Fiction Bestsellers',
-      image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=180&h=120&fit=crop'
-    }],
-    subcategories: [{
-      name: 'Top 100',
-      links: ["This Week's Top 10", 'Monthly Bestsellers', 'Annual Bestsellers']
-    }, {
-      name: 'By Genre',
-      links: ['Mystery Bestsellers', 'Romance Bestsellers', 'Sci-Fi Bestsellers']
-    }]
-  }, {
-    title: 'New Releases',
-    category: 'new-releases',
-    featuredCategories: [{
-      name: 'Coming Soon',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }, {
-      name: 'Just Released',
-      image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=180&h=120&fit=crop'
-    }],
-    subcategories: [{
-      name: 'This Month',
-      links: ['Fiction', 'Non-Fiction', "Children's", 'Young Adult']
-    }, {
-      name: 'Coming Soon',
-      links: ['Pre-Orders', 'Next Month', 'Notable Authors']
-    }]
-  }, {
-    title: 'Fiction',
-    category: 'fiction',
-    featuredCategories: [{
-      name: 'Top Fiction',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }, {
-      name: 'Award Winners',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }],
-    subcategories: [{
-      name: 'Genres',
-      links: ['Literary Fiction', 'Mystery', 'Romance', 'Science Fiction', 'Fantasy', 'Horror', 'Thriller']
-    }, {
-      name: 'Featured',
-      links: ['Book Club Picks', 'Staff Recommendations', 'Award Winners']
-    }]
-  }, {
-    title: 'Non Fiction',
-    category: 'non-fiction',
-    featuredCategories: [{
-      name: 'Biographies',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }, {
-      name: 'History',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }],
-    subcategories: [{
-      name: 'Categories',
-      links: ['Biography', 'History', 'Science', 'Self-Help', 'True Crime', 'Business']
-    }, {
-      name: 'Featured',
-      links: ['Current Affairs', 'Award Winners', 'New & Noteworthy']
-    }]
-  }, {
-    title: "Children's",
-    category: 'children',
-    featuredCategories: [{
-      name: 'Picture Books',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }, {
-      name: 'Middle Grade',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }],
-    subcategories: [{
-      name: 'By Age',
-      links: ['0-2 Years', '3-5 Years', '6-8 Years', '9-12 Years']
-    }, {
-      name: 'Categories',
-      links: ['Picture Books', 'Chapter Books', 'Activity Books', 'Educational']
-    }]
-  }, {
-    title: 'Textbooks',
-    category: 'textbooks',
-    featuredCategories: [{
-      name: 'College',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }, {
-      name: 'High School',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }],
-    subcategories: [{
-      name: 'Subjects',
-      links: ['Mathematics', 'Science', 'History', 'Literature', 'Computer Science']
-    }, {
-      name: 'Education Level',
-      links: ['Elementary', 'Middle School', 'High School', 'College']
-    }]
-  }, {
-    title: 'Audiobooks',
-    category: 'audiobooks',
-    featuredCategories: [{
-      name: 'Bestselling Audiobooks',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }, {
-      name: 'New Releases',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=180&h=120&fit=crop'
-    }],
-    subcategories: [{
-      name: 'Fiction',
-      links: ['Mystery', 'Romance', 'Science Fiction', 'Fantasy']
-    }, {
-      name: 'Non-Fiction',
-      links: ['Biography', 'Self-Help', 'History', 'Business']
-    }]
-  }];
   return (
     <>
       <header className={`w-full bg-white border-b border-gray-200 ${isScrolled ? 'sticky top-0 shadow-md z-50 transition-all duration-300' : ''}`}>
@@ -197,9 +106,6 @@ const Header = () => {
             <button className="mr-4 md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
               <MenuIcon size={20} />
             </button>
-
-
-
             <Link to="/" className="flex items-center group">
               <img src="./public/logo.png" className="mr-3 w-8 h-8 transition-all duration-300 group-hover:scale-110 drop-shadow-md" alt="Bookify Logo" />
               <div className="relative">
@@ -346,13 +252,13 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Navigation Menu */}
+        {/* Navigation Menu: chỉ còn menu collection mới */}
         <nav className="hidden md:block bg-white text-gray-800 relative z-30" onMouseLeave={handleCategoryLeave}>
           <div className="max-w-7xl mx-auto">
             <ul className="flex justify-between items-stretch h-12">
               {navigationItems.map(item => (
                 <li 
-                  key={item.title} 
+                  key={item.category} 
                   className="relative h-full" 
                   onMouseEnter={() => handleCategoryHover(item.category)}
                 >
@@ -402,7 +308,7 @@ const Header = () => {
               <nav>
                 <ul className="space-y-3">
                   {navigationItems.map(item => (
-                    <li key={item.title} className="py-2">
+                    <li key={item.category} className="py-2">
                       <Link to={`/collection/${item.category}`}>{item.title}</Link>
                     </li>
                   ))}
