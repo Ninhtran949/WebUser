@@ -3,7 +3,7 @@ import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext';
 import { useFavorites } from '../contexts/FavoriteContext';
 import { useCart } from '../contexts/CartContext';
-import { UserIcon, ShoppingBagIcon, HeartIcon, CreditCardIcon, MapPinIcon, ChevronRightIcon, LogOutIcon, BellIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
+import { UserIcon, ShoppingBagIcon, HeartIcon, CreditCardIcon, MapPinIcon, ChevronRightIcon, LogOutIcon, BellIcon, EyeIcon, EyeOffIcon, StarIcon, XIcon } from 'lucide-react';
 import type { Cart, OrderHistory, TransformedBill } from '../types/bill';
 import { apiClient } from '../utils/apiClient';
 
@@ -27,56 +27,24 @@ const UserAccount = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       if (!isAuthenticated) return;
-
-      // Skip fetching if profile is incomplete
       if (!user?.phoneNumber || user.phoneNumber === ' ') {
         setOrders([]);
         setLoading(false);
         return;
       }
-
       setLoading(true);
       setError(null);
-
       try {
-        const cartItems: Cart[] = await apiClient.get(`/bills/cart/user/${user.phoneNumber}`);
-
-        // Group cart items by idBill
-        const groupedOrders = cartItems.reduce((acc: TransformedBill, item: Cart) => {
-          const billId = item.idCart.toString();
-          if (!acc[billId]) {
-            acc[billId] = [];
-          }
-          acc[billId].push(item);
-          return acc;
-        }, {});
-
-        // Transform into OrderHistory format 
-        const transformedOrders: OrderHistory[] = Object.entries(groupedOrders).map(([billId, items]) => ({
-          idBill: billId,
-          dayOut: new Date().toISOString(),
-          total: items.reduce((sum, item) => sum + (item.totalPrice || 0), 0),
-          status: 'completed',
-          Cart: items
-        }));
-
-        setOrders(transformedOrders);
+        // Giả sử API trả về mảng các bill, mỗi bill có mảng Cart
+        const bills: OrderHistory[] = await apiClient.get(`/bills/user/${user.phoneNumber}`);
+        setOrders(bills);
         setError(null);
-
       } catch (err) {
-        console.error('Error fetching orders:', err);
         setError(err instanceof Error ? err.message : 'Failed to load orders');
-
-        // Nếu lỗi authentication, redirect về login
-        if (err instanceof Error && err.message === 'Please login again') {
-          // Có thể gọi logout từ AuthContext
-          // logout();
-        }
       } finally {
         setLoading(false);
       }
     };
-
     fetchOrders();
   }, [user?.phoneNumber, isAuthenticated]);
   const tabs = [
@@ -539,6 +507,51 @@ const OrderHistory = ({
   loading: boolean;
   error: string | null;
 }) => {
+  const [selectedOrder, setSelectedOrder] = useState<OrderHistory | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewData, setReviewData] = useState({
+    orderId: '',
+    productId: '',
+    productName: '',
+    rating: 5,
+    comment: ''
+  });
+
+  const openDetailsModal = (order: OrderHistory) => {
+    setSelectedOrder(order);
+    setShowDetailsModal(true);
+  };
+
+  const openReviewModal = (order: OrderHistory) => {
+    setSelectedOrder(order);
+    setReviewData({
+      orderId: order.idBill,
+      productId: order.Cart[0]?.idCart?.toString() || '', // Ensure string type
+      productName: order.Cart[0]?.nameProduct || '',
+      rating: 5,
+      comment: ''
+    });
+    setShowReviewModal(true);
+  };
+
+  const closeDetailsModal = () => {
+    setShowDetailsModal(false);
+    setSelectedOrder(null);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+  };
+
+  const handleReviewSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Here you would send the review data to your API
+    // For now, just close and alert
+    closeReviewModal();
+    alert('Review submitted successfully!');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -596,10 +609,16 @@ const OrderHistory = ({
                   <div className="font-bold text-lg">${order.total.toFixed(2)}</div>
 
                   <div className="flex flex-col items-end mt-1">
-                    <button className="text-blue-600 text-sm hover:underline mb-1">
+                    <button
+                      className="text-blue-600 text-sm hover:underline mb-1"
+                      onClick={() => openDetailsModal(order)}
+                    >
                       View Details
                     </button>
-                    <button className="text-blue-600 text-sm hover:underline">
+                    <button
+                      className="text-blue-600 text-sm hover:underline"
+                      onClick={() => openReviewModal(order)}
+                    >
                       Write a review
                     </button>
                   </div>
@@ -618,6 +637,208 @@ const OrderHistory = ({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Order Details Dialog */}
+      {showDetailsModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Order Details</h2>
+                <button
+                  onClick={closeDetailsModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <XIcon size={24} />
+                </button>
+              </div>
+              <div className="border-b border-gray-200 pb-4 mb-4">
+                <div className="flex flex-wrap justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Order Number</p>
+                    <p className="font-medium">#{selectedOrder.idBill}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Date</p>
+                    <p className="font-medium">
+                      {new Date(selectedOrder.dayOut).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Status</p>
+                    <p className={`font-medium ${selectedOrder.status === 'completed' ? 'text-green-600' : 'text-yellow-600'}`}>
+                      {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-3">Items</h3>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {selectedOrder.Cart.map((item, index) => (
+                        <tr key={index}>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.nameProduct}</td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${item.priceProduct.toFixed(2)}</td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{item.numberProduct}</td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${(item.priceProduct * item.numberProduct).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span>${selectedOrder.total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-600">Shipping</span>
+                  <span>$0.00</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-600">Tax</span>
+                  <span>$0.00</span>
+                </div>
+                <div className="flex justify-between font-semibold text-lg mt-2 pt-2 border-t border-gray-200">
+                  <span>Total</span>
+                  <span>${selectedOrder.total.toFixed(2)}</span>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={closeDetailsModal}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Write Review Dialog */}
+      {showReviewModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Write a Review</h2>
+                <button
+                  onClick={closeReviewModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <XIcon size={24} />
+                </button>
+              </div>
+              <form onSubmit={handleReviewSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Product
+                  </label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    value={reviewData.productId}
+                    onChange={e => {
+                      const selectedProduct = selectedOrder.Cart.find(
+                        item => item.idCart.toString() === e.target.value // Compare as string
+                      );
+                      setReviewData({
+                        ...reviewData,
+                        productId: e.target.value,
+                        productName: selectedProduct?.nameProduct || ''
+                      });
+                    }}
+                  >
+                    {selectedOrder.Cart.map((item, index) => (
+                      <option key={index} value={item.idCart.toString()}>
+                        {item.nameProduct}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Rating
+                  </label>
+                  <div className="flex space-x-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() =>
+                          setReviewData({
+                            ...reviewData,
+                            rating: star
+                          })
+                        }
+                        className="focus:outline-none"
+                      >
+                        <StarIcon
+                          size={24}
+                          className={
+                            star <= reviewData.rating
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                          }
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your Review
+                  </label>
+                  <textarea
+                    rows={4}
+                    placeholder="Share your experience with this product..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    value={reviewData.comment}
+                    onChange={e =>
+                      setReviewData({
+                        ...reviewData,
+                        comment: e.target.value
+                      })
+                    }
+                    required
+                  />
+                </div>
+                <div className="flex justify-end space-x-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeReviewModal}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Submit Review
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
       )}
     </div>
