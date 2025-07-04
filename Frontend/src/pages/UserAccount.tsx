@@ -27,20 +27,20 @@ const UserAccount = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       if (!isAuthenticated) return;
-      
+
       // Skip fetching if profile is incomplete
       if (!user?.phoneNumber || user.phoneNumber === ' ') {
         setOrders([]);
         setLoading(false);
         return;
       }
-      
+
       setLoading(true);
       setError(null);
 
       try {
         const cartItems: Cart[] = await apiClient.get(`/bills/cart/user/${user.phoneNumber}`);
-        
+
         // Group cart items by idBill
         const groupedOrders = cartItems.reduce((acc: TransformedBill, item: Cart) => {
           const billId = item.idCart.toString();
@@ -66,7 +66,7 @@ const UserAccount = () => {
       } catch (err) {
         console.error('Error fetching orders:', err);
         setError(err instanceof Error ? err.message : 'Failed to load orders');
-        
+
         // Nếu lỗi authentication, redirect về login
         if (err instanceof Error && err.message === 'Please login again') {
           // Có thể gọi logout từ AuthContext
@@ -143,7 +143,7 @@ const UserAccount = () => {
               </div>
               <div className="ml-3">
                 <p className="text-sm text-yellow-700">
-                  Please complete your profile to access all features. 
+                  Please complete your profile to access all features.
                   <Link to="/account/profile" className="font-medium underline text-yellow-700 hover:text-yellow-600 ml-1">
                     Update Profile
                   </Link>
@@ -152,16 +152,16 @@ const UserAccount = () => {
             </div>
           </div>
         )}
-        
+
         {/* Header Section */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
                 {user?.strUriAvatar ? (
-                  <img 
-                    src={user.strUriAvatar} 
-                    alt={user.name} 
+                  <img
+                    src={user.strUriAvatar}
+                    alt={user.name}
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
@@ -192,11 +192,10 @@ const UserAccount = () => {
                   <li key={tab.id}>
                     <Link
                       to={tab.path}
-                      className={`flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition ${
-                        location.pathname === tab.path
+                      className={`flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition ${location.pathname === tab.path
                           ? 'bg-blue-50 text-blue-800'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         {tab.icon}
@@ -222,15 +221,15 @@ const UserAccount = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <Routes>
                 <Route path="profile" element={<ProfileSettings user={user} />} />
-                <Route 
-                  path="orders" 
+                <Route
+                  path="orders"
                   element={
-                    <OrderHistory 
-                      orders={orders} 
-                      loading={loading} 
-                      error={error} 
+                    <OrderHistory
+                      orders={orders}
+                      loading={loading}
+                      error={error}
                     />
-                  } 
+                  }
                 />
                 <Route path="favorites" element={<SavedItems items={favorites} />} />
                 <Route path="payment" element={<PaymentMethods />} />
@@ -348,7 +347,7 @@ const ProfileSettings = ({ user }: { user: any }) => {
         try {
           const data = await response.json();
           if (data && data.message) errorMsg = data.message;
-        } catch {}
+        } catch { }
         setMessage({ type: 'error', text: errorMsg });
         return;
       }
@@ -372,9 +371,8 @@ const ProfileSettings = ({ user }: { user: any }) => {
       </div>
 
       {message && (
-        <div className={`p-4 rounded-md ${
-          message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-        }`}>
+        <div className={`p-4 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+          }`}>
           {message.text}
         </div>
       )}
@@ -532,11 +530,11 @@ const ProfileSettings = ({ user }: { user: any }) => {
 };
 
 // Order History Component
-const OrderHistory = ({ 
-  orders, 
-  loading, 
-  error 
-}: { 
+const OrderHistory = ({
+  orders,
+  loading,
+  error
+}: {
   orders: OrderHistory[];
   loading: boolean;
   error: string | null;
@@ -579,11 +577,10 @@ const OrderHistory = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">Order #{order.idBill}</span>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      order.status === 'completed' 
+                    <span className={`px-2 py-1 text-xs rounded-full ${order.status === 'completed'
                         ? 'bg-green-100 text-green-800'
                         : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                      }`}>
                       {order.status}
                     </span>
                   </div>
@@ -597,9 +594,15 @@ const OrderHistory = ({
                 </div>
                 <div className="text-right">
                   <div className="font-bold text-lg">${order.total.toFixed(2)}</div>
-                  <button className="text-blue-600 text-sm hover:underline mt-1">
-                    View Details
-                  </button>
+
+                  <div className="flex flex-col items-end mt-1">
+                    <button className="text-blue-600 text-sm hover:underline mb-1">
+                      View Details
+                    </button>
+                    <button className="text-blue-600 text-sm hover:underline">
+                      Write a review
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="border-t border-gray-100 pt-4">
@@ -635,16 +638,16 @@ const SavedItems = ({ items }: { items: any[] }) => {
       author: book.author,
       price: book.price,
       coverImage: book.coverImage,
-      category: book.category || 'Uncategorized' ,// Add missing category property
-        // Thêm các trường còn thiếu
-    productId: null,
-    isbn13: '',
-    publisher: '',
-    publicationDate: new Date().toISOString(),
-    pages: 0,
-    overview: '',
-    editorialReviews: [],
-    customerReviews: []
+      category: book.category || 'Uncategorized',// Add missing category property
+      // Thêm các trường còn thiếu
+      productId: null,
+      isbn13: '',
+      publisher: '',
+      publicationDate: new Date().toISOString(),
+      pages: 0,
+      overview: '',
+      editorialReviews: [],
+      customerReviews: []
     });
   };
 
@@ -683,13 +686,13 @@ const SavedItems = ({ items }: { items: any[] }) => {
               <div className="flex items-center justify-between mt-2">
                 <span className="font-bold">${item.price.toFixed(2)}</span>
                 <div className="flex space-x-2">
-                  <button 
+                  <button
                     onClick={() => handleRemoveFromFavorites(item.id)}
                     className="text-red-500 text-sm hover:underline"
                   >
                     Remove
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleAddToCart(item)}
                     className="text-blue-600 text-sm hover:underline"
                   >
