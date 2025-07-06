@@ -107,7 +107,7 @@ const Header = () => {
               <MenuIcon size={20} />
             </button>
             <Link to="/" className="flex items-center group">
-              <img src="/logo.png" className="mr-3 w-8 h-8 transition-all duration-300 group-hover:scale-110 drop-shadow-md" alt="Bookify Logo" />
+              <img src="./logo.png" className="mr-3 w-8 h-8 transition-all duration-300 group-hover:scale-110 drop-shadow-md" alt="Bookify Logo" />
               <div className="relative">
                 <span className="text-3xl font-bold text-blue-800 tracking-wide relative">
                   <span className="relative z-10">Book</span>
