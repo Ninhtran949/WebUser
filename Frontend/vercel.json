@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/oauth-success", "destination": "/index.html" },
+    { "source": "/account/:match*", "destination": "/index.html" },
+    { "source": "/:match*", "destination": "/index.html" }
+  ]
+}
