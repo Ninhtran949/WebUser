@@ -53,7 +53,7 @@ const PaymentResult = () => {
               <span className="text-gray-900">{orderTime}</span>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between">
             <button
               onClick={() => navigate('/')}
               className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-700 hover:bg-blue-800 transition-colors"
