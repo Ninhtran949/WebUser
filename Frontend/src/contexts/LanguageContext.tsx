@@ -78,6 +78,7 @@ export const translations = {
     'support.messagePlaceholder': 'Type your message...',
     'support.team': 'Support Team',
     'support.justNow': 'Just now',
+    'support.loginRequired': 'Please sign in to use customer support.',
 
     // Error messages
     'error.signupFailed': 'Failed to create account. Please try again.',
@@ -162,6 +163,7 @@ export const translations = {
     'support.messagePlaceholder': 'Nhập tin nhắn của bạn...',
     'support.team': 'Đội ngũ hỗ trợ',
     'support.justNow': 'Vừa xong',
+    'support.loginRequired': 'Vui lòng đăng nhập để sử dụng hỗ trợ khách hàng.',
 
     // Error messages
     'error.signupFailed': 'Tạo tài khoản thất bại. Vui lòng thử lại.',

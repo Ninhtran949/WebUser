@@ -7,6 +7,7 @@ import {
   CircleCheckIcon 
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Message {
   type: 'chat' | 'serverMessage';
@@ -30,6 +31,7 @@ const SupportDialog = ({
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   // Kết nối WebSocket khi component mount và dialog mở
   useEffect(() => {
@@ -89,6 +91,26 @@ const SupportDialog = ({
   };
 
   if (!isOpen) return null;
+
+  if (!user) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-end sm:items-center justify-center p-4">
+        <div className="bg-white rounded-2xl w-full max-w-md relative flex flex-col h-[250px] sm:h-[200px] shadow-xl items-center justify-center">
+          <div className="p-8 flex flex-col items-center justify-center">
+            <MessageSquareIcon size={40} className="text-blue-700 mb-4" />
+            <h2 className="text-lg font-semibold mb-2">{t('support.title')}</h2>
+            <p className="text-gray-600 text-center mb-6">{t('support.loginRequired')}</p>
+            <button
+              onClick={onClose}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full transition-colors"
+            >
+              {t('auth.close')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-end sm:items-center justify-center p-4">

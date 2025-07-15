@@ -6,6 +6,7 @@ import { useCart } from '../contexts/CartContext';
 import { UserIcon, ShoppingBagIcon, HeartIcon, CreditCardIcon, MapPinIcon, ChevronRightIcon, LogOutIcon, BellIcon, EyeIcon, EyeOffIcon, StarIcon, XIcon } from 'lucide-react';
 import type { Cart, OrderHistory, TransformedBill } from '../types/bill';
 import { apiClient } from '../utils/apiClient';
+import { Book } from '../types/book';
 
 const UserAccount = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -851,25 +852,9 @@ const SavedItems = ({ items }: { items: any[] }) => {
   const { removeFromFavorites } = useFavorites();
   const { user } = useAuth();
 
-  const handleAddToCart = (book: any) => {
-    addItem({
-      id: book.id,
-      _id: book.id, // Add missing _id property
-      title: book.title,
-      author: book.author,
-      price: book.price,
-      coverImage: book.coverImage,
-      category: book.category || 'Uncategorized',// Add missing category property
-      // Thêm các trường còn thiếu
-      productId: null,
-      isbn13: '',
-      publisher: '',
-      publicationDate: new Date().toISOString(),
-      pages: 0,
-      overview: '',
-      editorialReviews: [],
-      customerReviews: []
-    });
+  const handleAddToCart = (book: Book) => {
+    addItem(book);
+    
   };
 
   const handleRemoveFromFavorites = (bookId: string) => {
